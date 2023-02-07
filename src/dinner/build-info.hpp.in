@@ -1,0 +1,7 @@
+#include <filesystem>
+
+namespace bi {
+
+inline const std::filesystem::path SOURCE_ROOT = "@CMAKE_SOURCE_DIR@";
+
+} // namespace bi
