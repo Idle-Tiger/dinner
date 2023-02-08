@@ -1,26 +1,50 @@
 #include "config.hpp"
+#include "sdl.hpp"
+#include "story.hpp"
 #include "view.hpp"
 
 #include <tempo.hpp>
 
-#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_mixer.h>
 
-int main()
+#include <exception>
+#include <iostream>
+
+int main() try
 {
+    sdlCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS));
+    sdlCheck(TTF_Init());
+    constexpr auto imgInitFlags = IMG_INIT_PNG;
+    sdlCheck(IMG_Init(imgInitFlags) == imgInitFlags);
+
+    sdlCheck(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096));
+    Mix_VolumeMusic(40);
+
     loadConfigIfPresent();
 
-    auto view = View{};
+    {
+        [[maybe_unused]] auto story = Story{};
 
-    auto frameTimer = tempo::FrameTimer{config().gameFps};
-    for (;;) {
-        if (!view.processInput()) {
-            break;
-        }
+        auto view = View{};
 
-        if (auto framesPassed = frameTimer(); framesPassed > 0) {
-            // TODO: update
+        auto frameTimer = tempo::FrameTimer{config().gameFps};
+        for (;;) {
+            if (!view.processInput()) {
+                break;
+            }
 
-            view.present();
+            if (auto framesPassed = frameTimer(); framesPassed > 0) {
+                // TODO: update
+
+                view.present();
+            }
         }
     }
+
+    IMG_Quit();
+    TTF_Quit();
+    SDL_Quit();
+} catch (const std::exception& e) {
+    std::cerr << e.what() << "\n";
 }

@@ -23,6 +23,7 @@ void serialize(Config& config, const S& s)
     s(config.windowWidth, "window width");
     s(config.windowHeight, "window height");
     s(config.gameFps, "game fps");
+    s(config.fullscreen, "fullscreen");
 }
 
 fs::path standardConfigPath()

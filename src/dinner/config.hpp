@@ -8,6 +8,7 @@ struct Config {
     int windowWidth = 1024;
     int windowHeight = 768;
     int gameFps = 60;
+    bool fullscreen = true;
 };
 
 const Config& config();

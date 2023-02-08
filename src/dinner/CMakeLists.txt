@@ -12,5 +12,8 @@ target_link_libraries(dinner PRIVATE
     tempo
 
     SDL2::SDL2
+    SDL2_image::SDL2_image
+    SDL2_mixer::SDL2_mixer
+    SDL2_ttf::SDL2_ttf
     yaml-cpp::yaml-cpp
 )
