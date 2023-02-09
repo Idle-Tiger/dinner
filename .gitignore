@@ -1,3 +1,6 @@
 *.bak
 *.mmpz
 *.xcf
+/.vs/
+/CMakeSettings.json
+/out/

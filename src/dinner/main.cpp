@@ -8,10 +8,14 @@
 #include <SDL_image.h>
 #include <SDL_mixer.h>
 
+#include <cstdlib>
 #include <exception>
 #include <iostream>
 
-int main() try
+#ifdef __cplusplus
+extern "C"
+#endif
+int main(int argc, char* argv[]) try
 {
     sdlCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS));
     sdlCheck(TTF_Init());
@@ -45,6 +49,9 @@ int main() try
     IMG_Quit();
     TTF_Quit();
     SDL_Quit();
+
+    return EXIT_SUCCESS;
 } catch (const std::exception& e) {
     std::cerr << e.what() << "\n";
+    return EXIT_FAILURE;
 }

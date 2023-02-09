@@ -36,7 +36,14 @@ fs::path standardConfigPath()
         return fs::path{xdgConfigHome} / fileName;
     }
 
-    if (const char* home = std::getenv("HOME")) {
+    auto homeVarName = std::string{};
+#ifdef _WIN32
+    homeVarName = "HOMEPATH";
+#else
+    homeVarName = "HOME";
+#endif
+
+    if (const char* home = std::getenv(homeVarName.c_str())) {
         return fs::path{home} / ".config" / fileName;
     }
     throw Error{} <<

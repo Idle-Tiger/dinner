@@ -28,20 +28,20 @@ View::View()
 
     _bird.reset(sdlCheck(IMG_LoadTexture(
         _renderer.get(),
-        (bi::SOURCE_ROOT / "assets/test-level/bg/bird.png").c_str())));
+        (bi::SOURCE_ROOT / "assets/test-level/bg/bird.png").string().c_str())));
     _elephant.reset(sdlCheck(IMG_LoadTexture(
         _renderer.get(),
-        (bi::SOURCE_ROOT / "assets/test-level/bg/elephant.png").c_str())));
+        (bi::SOURCE_ROOT / "assets/test-level/bg/elephant.png").string().c_str())));
     _mouse.reset(sdlCheck(IMG_LoadTexture(
         _renderer.get(),
-        (bi::SOURCE_ROOT / "assets/test-level/bg/mouse.png").c_str())));
+        (bi::SOURCE_ROOT / "assets/test-level/bg/mouse.png").string().c_str())));
     _teaTable.reset(sdlCheck(IMG_LoadTexture(
         _renderer.get(),
-        (bi::SOURCE_ROOT / "assets/test-level/bg/tea-table.png").c_str())));
+        (bi::SOURCE_ROOT / "assets/test-level/bg/tea-table.png").string().c_str())));
 
     _font.reset(ttfCheck(TTF_OpenFont(
         (bi::SOURCE_ROOT /
-            "assets/test-level/fonts/open-sans/OpenSans-Regular.ttf").c_str(),
+            "assets/test-level/fonts/open-sans/OpenSans-Regular.ttf").string().c_str(),
         32)));
 
     {
@@ -57,7 +57,7 @@ View::View()
     }
 
     _music.reset(sdlCheck(Mix_LoadMUS(
-        (bi::SOURCE_ROOT / "assets/test-level/music/bg.wav").c_str())));
+        (bi::SOURCE_ROOT / "assets/test-level/music/bg.wav").string().c_str())));
 
     sdlCheck(Mix_PlayMusic(_music.get(), -1));
 }
