@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C"
 #endif
-int main(int argc, char* argv[]) try
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) try
 {
     sdlCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS));
     sdlCheck(TTF_Init());
