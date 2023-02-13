@@ -39,10 +39,13 @@ struct Choice {
     std::vector<Selection> selections;
 };
 
+struct Finish {};
+
 using Action = std::variant<
-    Choice,
     ShowBackground,
-    Text>;
+    Text,
+    Choice,
+    Finish>;
 
 struct Script {
 };

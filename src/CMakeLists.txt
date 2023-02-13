@@ -7,4 +7,7 @@ endif()
 
 add_subdirectory(tempo)
 
+add_subdirectory(base)
+
 add_subdirectory(dinner)
+add_subdirectory(storyteller)

@@ -1,13 +1,9 @@
 #include "story.hpp"
 
 #include "error.hpp"
+#include "overloaded.hpp"
 
 #include <type_traits>
-
-template<class... Ts> struct Overloaded : Ts... {
-    using Ts::operator()...;
-};
-template<class... Ts> Overloaded(Ts...) -> Overloaded<Ts...>;
 
 const Action& Story::action() const
 {
@@ -16,7 +12,8 @@ const Action& Story::action() const
 
 void Story::next()
 {
-    std::visit([this]<class T>(T&&) {
+    std::visit([this](auto&& action) {
+        using T = std::decay_t<decltype(action)>;
         if constexpr (std::is_same<T, Text>() ||
                 std::is_same<T, ShowBackground>()) {
             _index++;
@@ -68,9 +65,11 @@ void Story::initializeTestStory()
         }},
         ShowBackground{0},
         Text{0, "Не торопись, мышка, всему своё время!"},
+        Finish{},
         ShowBackground{3},
         Text{0, "Полакомимся мышиным соком!"},
         ShowBackground{1},
         Text{1, "Приятного аппетита..."},
+        Finish{},
     };
 }
