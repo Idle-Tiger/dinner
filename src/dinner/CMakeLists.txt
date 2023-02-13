@@ -3,6 +3,7 @@ configure_file(build-info.hpp.in include/build-info.hpp @ONLY)
 add_executable(dinner
     config.cpp
     main.cpp
+    story.cpp
     view.cpp
 )
 
