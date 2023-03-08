@@ -15,6 +15,7 @@ Checks: >
   -cppcoreguidelines-special-member-functions,
   -fuchsia-*,
   -google-explicit-constructor,
+  -google-readability-casting,
   -google-readability-todo,
   -google-runtime-int,
   -hicpp-explicit-conversions,

@@ -71,3 +71,12 @@ private:
     std::source_location _sourceLocation;
     mutable std::string _cache;
 };
+
+inline void check(
+    bool condition,
+    std::source_location sourceLocation = std::source_location::current())
+{
+    if (!condition) {
+        throw Error{sourceLocation} << "check failed";
+    }
+}

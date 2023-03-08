@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "overloaded.hpp"
 #include "sdl.hpp"
 #include "story.hpp"
 #include "view.hpp"
@@ -28,21 +29,27 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) try
     loadConfigIfPresent();
 
     {
-        [[maybe_unused]] auto story = Story{};
+        auto story = Story{};
+        story.initializeTestStory();
 
-        auto view = View{};
+        auto view = View{story};
+        view.loadImage(bi::SOURCE_ROOT / "assets/test-level/bg/bird.png");
+        view.loadImage(bi::SOURCE_ROOT / "assets/test-level/bg/elephant.png");
+        view.loadImage(bi::SOURCE_ROOT / "assets/test-level/bg/mouse.png");
+        view.loadImage(bi::SOURCE_ROOT / "assets/test-level/bg/tea-table.png");
 
+        bool done = false;
         auto frameTimer = tempo::FrameTimer{config().gameFps};
-        for (;;) {
+        while (!done) {
             if (!view.processInput()) {
                 break;
             }
 
-            if (auto framesPassed = frameTimer(); framesPassed > 0) {
-                // TODO: update
-
+            if (frameTimer() > 0) {
                 view.present();
             }
+
+            frameTimer.relax();
         }
     }
 
