@@ -10,4 +10,6 @@ add_subdirectory(SDL_mixer)
 set(SDL2TTF_INSTALL FALSE)
 add_subdirectory(SDL_ttf)
 
+add_subdirectory(flatbuffers)
+
 add_subdirectory(yaml-cpp)

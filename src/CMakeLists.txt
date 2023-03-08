@@ -5,7 +5,12 @@ else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+
+add_subdirectory(arg)
 add_subdirectory(tempo)
+
+add_subdirectory(booka)
 
 add_subdirectory(base)
 

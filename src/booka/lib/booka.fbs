@@ -1,0 +1,31 @@
+namespace booka;
+
+table Strings {
+  data:string;
+  offsets:[uint32];
+}
+
+table BinaryData {
+  data:[uint8];
+  offsets:[uint32];
+}
+
+enum ActionType : uint8 {
+  Phrase,
+  Background,
+}
+
+struct Action {
+  type:ActionType;
+  index:uint32;
+}
+
+table Booka {
+  image_data:BinaryData;
+  image_names:Strings;
+  character_names:Strings;
+  phrases:Strings;
+  story:[Action];
+}
+
+root_type Booka;

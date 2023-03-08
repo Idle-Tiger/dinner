@@ -16,3 +16,9 @@
 [submodule "deps/SDL_mixer"]
 	path = deps/SDL_mixer
 	url = https://github.com/libsdl-org/SDL_mixer.git
+[submodule "deps/flatbuffers"]
+	path = deps/flatbuffers
+	url = https://github.com/google/flatbuffers.git
+[submodule "src/arg"]
+	path = src/arg
+	url = https://github.com/snailbaron/arg.git
