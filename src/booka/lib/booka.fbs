@@ -1,4 +1,4 @@
-namespace booka;
+namespace fb;
 
 table Strings {
   data:string;

@@ -16,3 +16,4 @@ add_library(booka-lib
     ${CMAKE_CURRENT_BINARY_DIR}/include/booka_generated.h
 )
 target_include_directories(booka-lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
+target_link_libraries(booka-lib PRIVATE flatbuffers base)

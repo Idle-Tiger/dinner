@@ -1,6 +1,7 @@
 configure_file(build-info.hpp.in include/build-info.hpp @ONLY)
 
 add_library(base
+    memory_mapped_file.cpp
     story.cpp
 )
 
