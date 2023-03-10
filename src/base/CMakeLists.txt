@@ -9,3 +9,5 @@ target_include_directories(base PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}/include
 )
+
+set_target_properties (base PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)

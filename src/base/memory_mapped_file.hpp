@@ -4,6 +4,10 @@
 #include <filesystem>
 #include <span>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 class MemoryMappedFile {
 public:
     MemoryMappedFile(const std::filesystem::path& path);
@@ -14,7 +18,11 @@ public:
     [[nodiscard]] std::span<const std::byte> span() const;
 
 private:
+#ifdef linux
     int _fd = -1;
-    size_t _fileSize = 0;
-    void* _addr = nullptr;
+#elif defined(_WIN32)
+    HANDLE _fileHandle = INVALID_HANDLE_VALUE;
+    HANDLE _fileMappingHandle = INVALID_HANDLE_VALUE;
+#endif
+    std::span<const std::byte> _span;
 };

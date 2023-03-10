@@ -7,7 +7,7 @@ namespace {
 template <class FbObject>
 requires std::same_as<FbObject, fb::Strings> ||
     std::same_as<FbObject, fb::BinaryData>
-std::tuple<uint32_t, uint32_t> calculateRange(const FbObject* fbObject, size_t index)
+std::tuple<uint32_t, uint32_t> calculateRange(const FbObject* fbObject, uint32_t index)
 {
     return {
         fbObject->offsets()->Get(index),
@@ -18,7 +18,7 @@ std::tuple<uint32_t, uint32_t> calculateRange(const FbObject* fbObject, size_t i
 
 } // namespace
 
-StringsIterator::StringsIterator(const fb::Strings* strings, size_t index)
+StringsIterator::StringsIterator(const fb::Strings* strings, uint32_t index)
     : _strings(strings)
     , _index(index)
 { }
@@ -56,14 +56,14 @@ StringsIterator Strings::end() const
     return {_fbStrings, _fbStrings->offsets()->size()};
 }
 
-std::string_view Strings::operator[](size_t index) const
+std::string_view Strings::operator[](uint32_t index) const
 {
     auto [begin, end] = calculateRange(_fbStrings, index);
     return _fbStrings->data()->string_view().substr(begin, end - begin);
 }
 
 BinaryDataIterator::BinaryDataIterator(
-    const fb::BinaryData* binaryData, size_t index)
+    const fb::BinaryData* binaryData, uint32_t index)
     : _binaryData(binaryData)
     , _index(index)
 { }
@@ -103,7 +103,7 @@ BinaryData::BinaryData(const fb::BinaryData* fbBinaryData)
     return BinaryDataIterator{_fbBinaryData, _fbBinaryData->offsets()->size()};
 }
 
-std::span<const std::byte> BinaryData::operator[](size_t index) const
+std::span<const std::byte> BinaryData::operator[](uint32_t index) const
 {
     auto [begin, end] = calculateRange(_fbBinaryData, index);
     const auto* ptr =

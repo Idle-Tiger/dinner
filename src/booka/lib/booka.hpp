@@ -10,12 +10,9 @@
 #include <string_view>
 #include <utility>
 
-struct Action {
-};
-
 class StringsIterator {
 public:
-    StringsIterator(const fb::Strings* strings, size_t index);
+    StringsIterator(const fb::Strings* strings, uint32_t index);
 
     StringsIterator& operator++();
     StringsIterator operator++(int);
@@ -24,7 +21,7 @@ public:
 
 private:
     const fb::Strings* _strings = nullptr;
-    size_t _index = 0;
+    uint32_t _index = 0;
 };
 
 class Strings {
@@ -34,7 +31,7 @@ public:
     [[nodiscard]] StringsIterator begin() const;
     [[nodiscard]] StringsIterator end() const;
 
-    std::string_view operator[](size_t index) const;
+    std::string_view operator[](uint32_t index) const;
 
 private:
     const fb::Strings* _fbStrings = nullptr;
@@ -42,7 +39,7 @@ private:
 
 class BinaryDataIterator {
 public:
-    BinaryDataIterator(const fb::BinaryData* binaryData, size_t index);
+    BinaryDataIterator(const fb::BinaryData* binaryData, uint32_t index);
 
     BinaryDataIterator& operator++();
     BinaryDataIterator operator++(int);
@@ -51,7 +48,7 @@ public:
 
 private:
     const fb::BinaryData* _binaryData = nullptr;
-    size_t _index = 0;
+    uint32_t _index = 0;
 };
 
 class BinaryData {
@@ -61,7 +58,7 @@ public:
     [[nodiscard]] BinaryDataIterator begin() const;
     [[nodiscard]] BinaryDataIterator end() const;
 
-    std::span<const std::byte> operator[](size_t index) const;
+    std::span<const std::byte> operator[](uint32_t index) const;
 
 private:
     const fb::BinaryData* _fbBinaryData = nullptr;

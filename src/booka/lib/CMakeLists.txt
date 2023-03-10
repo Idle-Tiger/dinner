@@ -17,3 +17,4 @@ add_library(booka-lib
 )
 target_include_directories(booka-lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
 target_link_libraries(booka-lib PRIVATE flatbuffers base)
+set_target_properties (booka-lib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
