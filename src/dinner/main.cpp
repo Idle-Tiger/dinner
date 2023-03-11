@@ -4,6 +4,7 @@
 #include "story.hpp"
 #include "view.hpp"
 
+#include <arg.hpp>
 #include <tempo.hpp>
 
 #include <SDL_image.h>
@@ -11,13 +12,20 @@
 
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <iostream>
+
+namespace fs = std::filesystem;
 
 #ifdef __cplusplus
 extern "C"
 #endif
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) try
 {
+    arg::option<fs::path>()
+        .keys("--story")
+        .help("path to story booka file");
+
     sdlCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS));
     sdlCheck(TTF_Init());
     constexpr auto imgInitFlags = IMG_INIT_PNG;

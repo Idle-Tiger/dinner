@@ -1,5 +1,4 @@
 *.bak
-*.mmpz
 *.xcf
 /.vs/
 /CMakeSettings.json

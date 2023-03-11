@@ -5,6 +5,7 @@ add_executable(dinner
 )
 
 target_link_libraries(dinner PRIVATE
+    arg
     tempo
 
     base
