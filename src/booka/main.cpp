@@ -1,5 +1,9 @@
+#include "booka.hpp"
+#include "unpacked_booka.hpp"
+
 #include "arg.hpp"
 #include "error.hpp"
+#include "overloaded.hpp"
 
 #include <cstdlib>
 #include <exception>
@@ -8,6 +12,7 @@
 #include <iostream>
 #include <istream>
 #include <map>
+#include <regex>
 #include <string>
 
 namespace fs = std::filesystem;
@@ -43,13 +48,77 @@ std::istream& operator>>(std::istream& input, Action& action)
     return input;
 }
 
-void encode(const fs::path& inputFilePath, [[maybe_unused]] const fs::path& outputFilePath)
+void encode(const fs::path& inputFilePath, const fs::path& outputFilePath)
 {
     auto input = std::ifstream{inputFilePath};
     input.exceptions(std::ios::badbit);
 
+    std::string character;
+
+    auto unpackedBooka = booka::UnpackedBooka{};
     for (std::string line; std::getline(input, line); ) {
-        std::cout << "line: " << line << "\n";
+        auto match = std::smatch{};
+
+        if (line.empty()) {
+            character = "";
+        } else if (std::regex_match(line, match, std::regex{"\\(.*\\)"})) {
+            unpackedBooka.actions.emplace_back(
+                booka::UnpackedShowTextAction{.character = "", .text = line});
+            std::cout << "[] " << line << "\n";
+        } else if (std::regex_match(line, match, std::regex{"(.+):\\s*(.*)"})) {
+            character = match[1];
+            const auto& phrase = match[2];
+            unpackedBooka.actions.emplace_back(
+                booka::UnpackedShowTextAction{
+                    .character = character, .text = phrase});
+            std::cout << "[" << character << "] " << phrase << "\n";
+        } else {
+            unpackedBooka.actions.emplace_back(
+                booka::UnpackedShowTextAction{.character = character, .text = line});
+            std::cout << "[" << character << "] " << line << "\n";
+        }
+    }
+
+    unpackedBooka.pack(outputFilePath);
+}
+
+void decode(const fs::path& inputFilePath, const fs::path& outputDirectoryPath)
+{
+    if (fs::exists(outputDirectoryPath)) {
+        fs::remove_all(outputDirectoryPath);
+    }
+    fs::create_directory(outputDirectoryPath);
+    fs::create_directory(outputDirectoryPath / "images");
+
+    auto booka = booka::Booka{inputFilePath};
+    for (const auto& image : booka.images()) {
+        auto baseName = std::regex_replace(
+            std::string{image.name}, std::regex{"\\s+"}, "_");
+        auto filePath = outputDirectoryPath / "images" / baseName;
+        filePath.replace_extension(".png");
+
+        auto output = std::ofstream{filePath, std::ios::binary};
+        output.exceptions(std::ios::badbit | std::ios::failbit);
+        output.write(
+            reinterpret_cast<const char*>(image.data.data()),
+            static_cast<std::streamsize>(image.data.size()));
+    }
+
+    auto output = std::ofstream{outputDirectoryPath / "script.txt"};
+    output.exceptions(std::ios::badbit | std::ios::failbit);
+    for (const auto& action : booka.actions()) {
+        std::visit(Overloaded{
+            [&] (const booka::ShowImageAction& showImageAction) {
+                output << "[" <<
+                    booka.images()[showImageAction.imageIndex].name << "]\n";
+            },
+            [&] (const booka::ShowTextAction& showTextAction) {
+                if (!showTextAction.character.empty()) {
+                    output << showTextAction.character << ": ";
+                }
+                output << showTextAction.text << "\n";
+            }
+        }, action);
     }
 }
 
@@ -73,7 +142,7 @@ int main(int argc, char* argv[]) try
 
     switch (action) {
         case Action::Decode:
-            throw Error{} << "decoding is not implemented";
+            decode(input, output);
             break;
         case Action::Encode:
             encode(input, output);

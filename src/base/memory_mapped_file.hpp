@@ -24,5 +24,5 @@ private:
     HANDLE _fileHandle = INVALID_HANDLE_VALUE;
     HANDLE _fileMappingHandle = INVALID_HANDLE_VALUE;
 #endif
-    std::span<const std::byte> _span;
+    std::span<std::byte> _span;
 };

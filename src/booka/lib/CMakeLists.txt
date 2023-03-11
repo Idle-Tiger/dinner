@@ -13,8 +13,12 @@ add_custom_command(
 
 add_library(booka-lib
     booka.cpp
+    unpacked_booka.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/include/booka_generated.h
 )
-target_include_directories(booka-lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
-target_link_libraries(booka-lib PRIVATE flatbuffers base)
+target_include_directories(booka-lib PUBLIC
+    include
+    ${CMAKE_CURRENT_BINARY_DIR}/include
+)
+target_link_libraries(booka-lib PUBLIC flatbuffers base)
 set_target_properties (booka-lib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)

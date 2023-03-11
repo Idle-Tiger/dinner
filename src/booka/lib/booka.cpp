@@ -1,6 +1,12 @@
 #include "booka.hpp"
 
+#include "error.hpp"
+
 #include <concepts>
+
+#include <iostream>
+
+namespace booka {
 
 namespace {
 
@@ -18,42 +24,18 @@ std::tuple<uint32_t, uint32_t> calculateRange(const FbObject* fbObject, uint32_t
 
 } // namespace
 
-StringsIterator::StringsIterator(const fb::Strings* strings, uint32_t index)
-    : _strings(strings)
-    , _index(index)
-{ }
-
-StringsIterator& StringsIterator::operator++()
-{
-    ++_index;
-    return *this;
-}
-
-StringsIterator StringsIterator::operator++(int)
-{
-    auto tmp = *this;
-    ++*this;
-    return tmp;
-}
-
-std::string_view StringsIterator::operator*() const
-{
-    auto [begin, end] = calculateRange(_strings, _index);
-    return _strings->data()->string_view().substr(begin, end - begin);
-}
-
 Strings::Strings(const fb::Strings* fbStrings)
     : _fbStrings(fbStrings)
 { }
 
-StringsIterator Strings::begin() const
+IndexIterator<Strings> Strings::begin() const
 {
-    return {_fbStrings, 0};
+    return {*this, 0};
 }
 
-StringsIterator Strings::end() const
+IndexIterator<Strings> Strings::end() const
 {
-    return {_fbStrings, _fbStrings->offsets()->size()};
+    return {*this, _fbStrings->offsets()->size()};
 }
 
 std::string_view Strings::operator[](uint32_t index) const
@@ -62,45 +44,18 @@ std::string_view Strings::operator[](uint32_t index) const
     return _fbStrings->data()->string_view().substr(begin, end - begin);
 }
 
-BinaryDataIterator::BinaryDataIterator(
-    const fb::BinaryData* binaryData, uint32_t index)
-    : _binaryData(binaryData)
-    , _index(index)
-{ }
-
-BinaryDataIterator& BinaryDataIterator::operator++()
-{
-    ++_index;
-    return *this;
-}
-
-BinaryDataIterator BinaryDataIterator::operator++(int)
-{
-    auto tmp = *this;
-    ++*this;
-    return tmp;
-}
-
-std::span<const std::byte> BinaryDataIterator::operator*() const
-{
-    auto [begin, end] = calculateRange(_binaryData, _index);
-    const auto* ptr =
-        reinterpret_cast<const std::byte*>(_binaryData->data()->data() + begin);
-    return {ptr, begin - end};
-}
-
 BinaryData::BinaryData(const fb::BinaryData* fbBinaryData)
     : _fbBinaryData(fbBinaryData)
 { }
 
-[[nodiscard]] BinaryDataIterator BinaryData::begin() const
+[[nodiscard]] IndexIterator<BinaryData> BinaryData::begin() const
 {
-    return BinaryDataIterator{_fbBinaryData, 0};
+    return {*this, 0};
 }
 
-[[nodiscard]] BinaryDataIterator BinaryData::end() const
+[[nodiscard]] IndexIterator<BinaryData> BinaryData::end() const
 {
-    return BinaryDataIterator{_fbBinaryData, _fbBinaryData->offsets()->size()};
+    return {*this, _fbBinaryData->offsets()->size()};
 }
 
 std::span<const std::byte> BinaryData::operator[](uint32_t index) const
@@ -111,23 +66,100 @@ std::span<const std::byte> BinaryData::operator[](uint32_t index) const
     return {ptr, begin - end};
 }
 
+Images::Images(const fb::Booka* booka)
+    : _booka(booka)
+{ }
+
+[[nodiscard]] IndexIterator<Images> Images::begin() const
+{
+    return {*this, 0};
+}
+
+[[nodiscard]] IndexIterator<Images> Images::end() const
+{
+    return {*this, _booka->imageNames()->offsets()->size()};
+}
+
+Image Images::operator[](uint32_t index) const
+{
+    return {
+        .name = Strings{_booka->imageNames()}[index],
+        .data = BinaryData{_booka->imageData()}[index],
+    };
+}
+
+Actions::Actions(const fb::Booka* booka)
+    : _booka(booka)
+{ }
+
+IndexIterator<Actions> Actions::begin() const
+{
+    return {*this, 0};
+}
+
+IndexIterator<Actions> Actions::end() const
+{
+    return {*this, _booka->story()->size()};
+}
+
+Action Actions::operator[](uint32_t index) const
+{
+    const auto* fbAction = _booka->story()->Get(index);
+    switch (fbAction->type()) {
+        case fb::ActionType::Image:
+        {
+            const fb::ShowImageAction* fbShowImageAction =
+                _booka->showImageActions()->Get(fbAction->index());
+            return ShowImageAction{
+                .imageIndex = fbShowImageAction->imageIndex()
+            };
+        }
+        case fb::ActionType::Text:
+        {
+            const fb::ShowTextAction* fbShowTextAction =
+                _booka->showTextActions()->Get(fbAction->index());
+            std::cout << "character index: " <<
+                fbShowTextAction->characterIndex() << "; phrase index: " <<
+                fbShowTextAction->phraseIndex() << "\n";
+
+            auto characterNames = Strings{_booka->characterNames()};
+            auto characterName = std::string_view{};
+            if (fbShowTextAction->characterIndex() != uint32_t(-1)) {
+                characterName =
+                    characterNames[fbShowTextAction->characterIndex()];
+            }
+
+            auto phrases = Strings{_booka->phrases()};
+            const std::string_view phrase =
+                phrases[fbShowTextAction->phraseIndex()];
+            return ShowTextAction{
+                .character = characterName,
+                .text = phrase,
+            };
+        }
+    }
+
+    throw Error{} << "unknown fb::Action type";
+}
+
 Booka::Booka(const std::filesystem::path& path)
     : _file(path)
     , _booka(fb::GetBooka(_file.span().data()))
-{
-}
+{ }
 
-Strings Booka::imageNames() const
+Images Booka::images() const
 {
-    return {_booka->imageNames()};
-}
-
-BinaryData Booka::images() const
-{
-    return {_booka->imageData()};
+    return {_booka};
 }
 
 Strings Booka::characterNames() const
 {
     return {_booka->characterNames()};
 }
+
+Actions Booka::actions() const
+{
+    return {_booka};
+}
+
+} // namespace booka

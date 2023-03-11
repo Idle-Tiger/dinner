@@ -1,4 +1,4 @@
-namespace fb;
+namespace booka.fb;
 
 table Strings {
   data:string;
@@ -11,8 +11,17 @@ table BinaryData {
 }
 
 enum ActionType : uint8 {
-  Phrase,
-  Background,
+  Image,
+  Text,
+}
+
+struct ShowTextAction {
+  character_index:uint32;
+  phrase_index:uint32;
+}
+
+struct ShowImageAction {
+  image_index:uint32;
 }
 
 struct Action {
@@ -25,6 +34,8 @@ table Booka {
   image_names:Strings;
   character_names:Strings;
   phrases:Strings;
+  show_text_actions:[ShowTextAction];
+  show_image_actions:[ShowImageAction];
   story:[Action];
 }
 

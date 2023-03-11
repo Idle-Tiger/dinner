@@ -22,7 +22,7 @@ MemoryMappedFile::MemoryMappedFile(const std::filesystem::path& path)
         fileSize = sb.st_size;
     }
 
-    void* address = mmap(nullptr, _fileSize, PROT_READ, MAP_PRIVATE, _fd, 0);
+    void* address = mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, _fd, 0);
     check(address != MAP_FAILED); // NOLINT
 
     _span = {static_cast<std::byte*>(address), static_cast<size_t>(fileSize)};
@@ -73,7 +73,7 @@ MemoryMappedFile::~MemoryMappedFile()
 {
     if (!_span.empty()) {
 #ifdef linux
-        munmap(_address, _fileSize);
+        munmap(_span.data(), _span.size());
         close(_fd);
 #elif defined(_WIN32)
         UnmapViewOfFile(_span.data());
