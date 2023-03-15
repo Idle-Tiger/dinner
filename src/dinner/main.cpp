@@ -1,8 +1,9 @@
 #include "config.hpp"
 #include "overloaded.hpp"
 #include "sdl.hpp"
-#include "story.hpp"
 #include "view.hpp"
+
+#include <booka.hpp>
 
 #include <arg.hpp>
 #include <tempo.hpp>
@@ -20,12 +21,17 @@ namespace fs = std::filesystem;
 #ifdef __cplusplus
 extern "C"
 #endif
-int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) try
+int main(int argc, char* argv[]) try
 {
-    arg::option<fs::path>()
+    auto storyFilePath = arg::option<fs::path>()
         .keys("--story")
+        .defaultValue(bi::BUILD_ROOT / "assets" / "stories" / "test-1.booka")
         .help("path to story booka file");
+    arg::parse(argc, argv);
 
+    processConfig();
+
+    std::cout << "initializing SDL\n";
     sdlCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS));
     sdlCheck(TTF_Init());
     constexpr auto imgInitFlags = IMG_INIT_PNG;
@@ -34,18 +40,14 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) try
     sdlCheck(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096));
     Mix_VolumeMusic(40);
 
-    loadConfigIfPresent();
-
     {
-        auto story = Story{};
-        story.initializeTestStory();
+        std::cout << "loading booka story from " << storyFilePath << "\n";
+        auto booka = booka::Booka{storyFilePath};
 
-        auto view = View{story};
-        view.loadImage(bi::SOURCE_ROOT / "assets/test-level/bg/bird.png");
-        view.loadImage(bi::SOURCE_ROOT / "assets/test-level/bg/elephant.png");
-        view.loadImage(bi::SOURCE_ROOT / "assets/test-level/bg/mouse.png");
-        view.loadImage(bi::SOURCE_ROOT / "assets/test-level/bg/tea-table.png");
+        std::cout << "creating view\n";
+        auto view = View{booka};
 
+        std::cout << "starting game\n";
         bool done = false;
         auto frameTimer = tempo::FrameTimer{config().gameFps};
         while (!done) {

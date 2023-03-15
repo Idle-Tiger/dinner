@@ -16,13 +16,26 @@ struct UnpackedShowTextAction {
     std::string text;
 };
 
+struct UnpackedPlayMusicAction {
+    uint32_t musicIndex = 0;
+};
+
 using UnpackedAction = std::variant<
     UnpackedShowImageAction,
-    UnpackedShowTextAction
+    UnpackedShowTextAction,
+    UnpackedPlayMusicAction
 >;
 
+struct UnpackedNamedData {
+    std::string name;
+    std::vector<char> data;
+};
+
 struct UnpackedBooka {
-    std::vector<std::vector<uint8_t>> images;
+    std::vector<std::string> imageNames;
+    std::vector<std::vector<char>> imageData;
+    std::vector<std::string> musicNames;
+    std::vector<std::vector<char>> musicData;
     std::vector<UnpackedAction> actions;
 
     void pack(const std::filesystem::path& path);

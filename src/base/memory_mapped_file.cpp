@@ -2,16 +2,22 @@
 
 #include "error.hpp"
 
-#ifdef linux
+#ifdef __linux
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
 
-MemoryMappedFile::MemoryMappedFile(const std::filesystem::path& path)
+namespace fs = std::filesystem;
+
+MemoryMappedFile::MemoryMappedFile(const fs::path& path)
 {
-#ifdef linux
+    if (!fs::exists(path)) {
+        throw Error{} << "path does not exist: " << path;
+    }
+
+#ifdef __linux__
     _fd = open(path.string().c_str(), O_RDONLY); // NOLINT
     check(_fd != -1);
 

@@ -28,7 +28,7 @@ public:
         return *this;
     }
 
-    IndexIterator operator++(int) const
+    IndexIterator operator++(int)
     {
         auto temp = *this;
         ++*this;
@@ -81,26 +81,31 @@ private:
     const fb::BinaryData* _fbBinaryData = nullptr;
 };
 
-struct Image {
+struct NamedData {
     std::string_view name;
     std::span<const std::byte> data;
 };
 
-class Images {
+class NamedDataStorage {
 public:
-    Images(const fb::Booka* booka);
+    NamedDataStorage(const fb::Strings* names, const fb::BinaryData* data);
 
-    [[nodiscard]] IndexIterator<Images> begin() const;
-    [[nodiscard]] IndexIterator<Images> end() const;
+    [[nodiscard]] IndexIterator<NamedDataStorage> begin() const;
+    [[nodiscard]] IndexIterator<NamedDataStorage> end() const;
 
-    Image operator[](uint32_t index) const;
+    NamedData operator[](uint32_t index) const;
 
 private:
-    const fb::Booka* _booka = nullptr;
+    const fb::Strings* _names = nullptr;
+    const fb::BinaryData* _data = nullptr;
 };
 
 struct ShowImageAction {
     uint32_t imageIndex = 0;
+};
+
+struct PlayMusicAction {
+    uint32_t musicIndex = 0;
 };
 
 struct ShowTextAction {
@@ -109,16 +114,18 @@ struct ShowTextAction {
 };
 
 using Action = std::variant<
+    PlayMusicAction,
     ShowImageAction,
-    ShowTextAction
->;
+    ShowTextAction>;
 
 class Actions {
 public:
+    using Iterator = IndexIterator<Actions>;
+
     Actions(const fb::Booka* booka);
 
-    [[nodiscard]] IndexIterator<Actions> begin() const;
-    [[nodiscard]] IndexIterator<Actions> end() const;
+    [[nodiscard]] Iterator begin() const;
+    [[nodiscard]] Iterator end() const;
 
     Action operator[](uint32_t index) const;
 
@@ -128,15 +135,28 @@ private:
 
 class Booka {
 public:
-    Booka(const std::filesystem::path& path);
+    Booka(const std::filesystem::path& path)
+        : _file(path)
+        , _booka(fb::GetBooka(_file.span().data()))
+        , _images(_booka->imageNames(), _booka->imageData())
+        , _music(_booka->musicNames(), _booka->musicData())
+        , _characterNames(_booka->characterNames())
+        , _actions(_booka)
+    { }
 
-    [[nodiscard]] Images images() const;
-    [[nodiscard]] Strings characterNames() const;
-    [[nodiscard]] Actions actions() const;
+    [[nodiscard]] const NamedDataStorage& images() const { return _images; }
+    [[nodiscard]] const NamedDataStorage& music() const { return _music; }
+    [[nodiscard]] const Strings& characterNames() const { return _characterNames; }
+    [[nodiscard]] const Actions& actions() const { return _actions; }
 
 private:
     MemoryMappedFile _file;
     const fb::Booka* _booka = nullptr;
+
+    NamedDataStorage _images;
+    NamedDataStorage _music;
+    Strings _characterNames;
+    Actions _actions;
 };
 
 } // namespace booka

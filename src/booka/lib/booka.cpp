@@ -1,6 +1,7 @@
 #include "booka.hpp"
 
 #include "error.hpp"
+#include "logging.hpp"
 
 #include <concepts>
 
@@ -63,29 +64,31 @@ std::span<const std::byte> BinaryData::operator[](uint32_t index) const
     auto [begin, end] = calculateRange(_fbBinaryData, index);
     const auto* ptr =
         reinterpret_cast<const std::byte*>(_fbBinaryData->data()->data() + begin);
-    return {ptr, begin - end};
+    return {ptr, end - begin};
 }
 
-Images::Images(const fb::Booka* booka)
-    : _booka(booka)
+NamedDataStorage::NamedDataStorage(const fb::Strings* names, const fb::BinaryData* data)
+    : _names(names)
+    , _data(data)
 { }
 
-[[nodiscard]] IndexIterator<Images> Images::begin() const
+[[nodiscard]] IndexIterator<NamedDataStorage> NamedDataStorage::begin() const
 {
     return {*this, 0};
 }
 
-[[nodiscard]] IndexIterator<Images> Images::end() const
+[[nodiscard]] IndexIterator<NamedDataStorage> NamedDataStorage::end() const
 {
-    return {*this, _booka->imageNames()->offsets()->size()};
+    return {*this, _names->offsets()->size()};
 }
 
-Image Images::operator[](uint32_t index) const
+NamedData NamedDataStorage::operator[](uint32_t index) const
 {
-    return {
-        .name = Strings{_booka->imageNames()}[index],
-        .data = BinaryData{_booka->imageData()}[index],
+    auto result = NamedData {
+        .name = Strings{_names}[index],
+        .data = BinaryData{_data}[index],
     };
+    return result;
 }
 
 Actions::Actions(const fb::Booka* booka)
@@ -104,16 +107,10 @@ IndexIterator<Actions> Actions::end() const
 
 Action Actions::operator[](uint32_t index) const
 {
+    std::cout << "getting action " << index << "\n";
     const auto* fbAction = _booka->story()->Get(index);
+    std::cout << "got action pointer\n";
     switch (fbAction->type()) {
-        case fb::ActionType::Image:
-        {
-            const fb::ShowImageAction* fbShowImageAction =
-                _booka->showImageActions()->Get(fbAction->index());
-            return ShowImageAction{
-                .imageIndex = fbShowImageAction->imageIndex()
-            };
-        }
         case fb::ActionType::Text:
         {
             const fb::ShowTextAction* fbShowTextAction =
@@ -137,29 +134,13 @@ Action Actions::operator[](uint32_t index) const
                 .text = phrase,
             };
         }
+        case fb::ActionType::Image:
+            return ShowImageAction{.imageIndex = fbAction->index()};
+        case fb::ActionType::Music:
+            return PlayMusicAction{.musicIndex = fbAction->index()};
     }
 
     throw Error{} << "unknown fb::Action type";
-}
-
-Booka::Booka(const std::filesystem::path& path)
-    : _file(path)
-    , _booka(fb::GetBooka(_file.span().data()))
-{ }
-
-Images Booka::images() const
-{
-    return {_booka};
-}
-
-Strings Booka::characterNames() const
-{
-    return {_booka->characterNames()};
-}
-
-Actions Booka::actions() const
-{
-    return {_booka};
 }
 
 } // namespace booka

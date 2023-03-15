@@ -6,12 +6,13 @@ table Strings {
 }
 
 table BinaryData {
-  data:[uint8];
+  data:[byte];
   offsets:[uint32];
 }
 
 enum ActionType : uint8 {
   Image,
+  Music,
   Text,
 }
 
@@ -20,22 +21,19 @@ struct ShowTextAction {
   phrase_index:uint32;
 }
 
-struct ShowImageAction {
-  image_index:uint32;
-}
-
 struct Action {
   type:ActionType;
   index:uint32;
 }
 
 table Booka {
-  image_data:BinaryData;
   image_names:Strings;
+  image_data:BinaryData;
+  music_names:Strings;
+  music_data:BinaryData;
   character_names:Strings;
   phrases:Strings;
   show_text_actions:[ShowTextAction];
-  show_image_actions:[ShowImageAction];
   story:[Action];
 }
 

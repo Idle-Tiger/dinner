@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 #include <mutex>
 #include <string>
 
@@ -59,6 +60,7 @@ const Config& config()
 
 void loadConfigFromFile(const fs::path& path)
 {
+    std::cout << "loading config from " << path << "\n";
     auto yaml = YAML::LoadFile(path.string());
 
     auto lock = std::lock_guard{globalConfigMutex};
@@ -89,15 +91,11 @@ void saveConfigToFile(const fs::path& path)
     output << yaml;
 }
 
-void loadConfigIfPresent()
+void processConfig()
 {
     auto path = standardConfigPath();
     if (fs::exists(path)) {
         loadConfigFromFile(path);
     }
-}
-
-void saveConfig()
-{
-    saveConfigToFile(standardConfigPath());
+    saveConfigToFile(path);
 }

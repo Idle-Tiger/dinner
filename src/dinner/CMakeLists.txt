@@ -9,6 +9,7 @@ target_link_libraries(dinner PRIVATE
     tempo
 
     base
+    booka-lib
 
     SDL2::SDL2
     SDL2::SDL2main

@@ -8,3 +8,5 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 
 add_subdirectory(deps)
 add_subdirectory(src)
+
+add_subdirectory(assets)

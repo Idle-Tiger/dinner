@@ -16,5 +16,4 @@ const Config& config();
 void loadConfigFromFile(const std::filesystem::path& path);
 void saveConfigToFile(const std::filesystem::path& path);
 
-void loadConfigIfPresent();
-void saveConfig();
+void processConfig();

@@ -18,7 +18,7 @@ public:
     [[nodiscard]] std::span<const std::byte> span() const;
 
 private:
-#ifdef linux
+#ifdef __linux__
     int _fd = -1;
 #elif defined(_WIN32)
     HANDLE _fileHandle = INVALID_HANDLE_VALUE;

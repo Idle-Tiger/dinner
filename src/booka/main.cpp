@@ -3,6 +3,7 @@
 
 #include "arg.hpp"
 #include "error.hpp"
+#include "logging.hpp"
 #include "overloaded.hpp"
 
 #include <cstdlib>
@@ -16,6 +17,21 @@
 #include <string>
 
 namespace fs = std::filesystem;
+
+std::vector<char> readFile(const fs::path& path)
+{
+    if (!fs::exists(path)) {
+        throw Error{} << "file does not exist: " << path;
+    }
+    auto input = std::ifstream{};
+    input.exceptions(std::ios::badbit | std::ios::failbit);
+    input.open(path, std::ios::binary | std::ios::ate);
+    const auto fileSize = input.tellg();
+    input.seekg(0, std::ios::beg);
+    auto data = std::vector<char>(fileSize);
+    input.read(data.data(), fileSize);
+    return data;
+}
 
 enum class Action {
     Encode,
@@ -54,6 +70,8 @@ void encode(const fs::path& inputFilePath, const fs::path& outputFilePath)
     input.exceptions(std::ios::badbit);
 
     std::string character;
+    std::map<std::string, uint32_t> imageIndices;
+    std::map<std::string, uint32_t> musicIndices;
 
     auto unpackedBooka = booka::UnpackedBooka{};
     for (std::string line; std::getline(input, line); ) {
@@ -61,6 +79,42 @@ void encode(const fs::path& inputFilePath, const fs::path& outputFilePath)
 
         if (line.empty()) {
             character = "";
+        } else if (line.starts_with("[")) {
+            if (std::regex_match(
+                    line,
+                    match,
+                    std::regex{R"_(\[фон "([^"\]]+)" ([^\]]+)\])_"})) {
+                auto imageName = match[1];
+                auto imagePath = inputFilePath.parent_path() / fs::path{match[2]};
+                auto imageData = readFile(imagePath);
+                std::cout << "image '" << imageName << "': " << Size{imageData.size()} << "\n";
+                imageIndices[imageName] = unpackedBooka.imageNames.size();
+                unpackedBooka.imageNames.push_back(imageName);
+                unpackedBooka.imageData.push_back(imageData);
+            } else if (std::regex_match(
+                    line,
+                    match,
+                    std::regex{R"_(\[музыка "([^"\]]+)" ([^\]]+)\])_"})) {
+                auto musicName = match[1];
+                auto musicPath = inputFilePath.parent_path() / fs::path{match[2]};
+                auto musicData = readFile(musicPath);
+                std::cout << "music '" << musicName << "': " << Size{musicData.size()} << "\n";
+                musicIndices[musicName] = unpackedBooka.musicNames.size();
+                unpackedBooka.musicNames.push_back(musicName);
+                unpackedBooka.musicData.push_back(musicData);
+            } else {
+                throw Error{} << "unknown directive: " << line;
+            }
+        } else if (std::regex_match(line, match, std::regex{"\\(фон: (.*)\\)"})) {
+            auto imageName = match[1];
+            auto imageIndex = imageIndices.at(imageName);
+            unpackedBooka.actions.emplace_back(
+                booka::UnpackedShowImageAction{.imageIndex = imageIndex});
+        } else if (std::regex_match(line, match, std::regex{"\\(музыка: (.*)\\)"})) {
+            auto musicName = match[1];
+            auto musicIndex = musicIndices.at(musicName);
+            unpackedBooka.actions.emplace_back(
+                booka::UnpackedPlayMusicAction{.musicIndex = musicIndex});
         } else if (std::regex_match(line, match, std::regex{"\\(.*\\)"})) {
             unpackedBooka.actions.emplace_back(
                 booka::UnpackedShowTextAction{.character = "", .text = line});
@@ -108,15 +162,18 @@ void decode(const fs::path& inputFilePath, const fs::path& outputDirectoryPath)
     output.exceptions(std::ios::badbit | std::ios::failbit);
     for (const auto& action : booka.actions()) {
         std::visit(Overloaded{
-            [&] (const booka::ShowImageAction& showImageAction) {
+            [&] (const booka::ShowImageAction& action) {
                 output << "[" <<
-                    booka.images()[showImageAction.imageIndex].name << "]\n";
+                    booka.images()[action.imageIndex].name << "]\n";
             },
-            [&] (const booka::ShowTextAction& showTextAction) {
-                if (!showTextAction.character.empty()) {
-                    output << showTextAction.character << ": ";
+            [&] (const booka::PlayMusicAction& action) {
+                output << "[" << booka.music()[action.musicIndex].name << "]\n";
+            },
+            [&] (const booka::ShowTextAction& action) {
+                if (!action.character.empty()) {
+                    output << action.character << ": ";
                 }
-                output << showTextAction.text << "\n";
+                output << action.text << "\n";
             }
         }, action);
     }

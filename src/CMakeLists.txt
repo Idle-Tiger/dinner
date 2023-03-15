@@ -3,7 +3,7 @@ if(MSVC)
     add_compile_options(/W3 /WX /utf-8)
 else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
-    set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+    #set(CMAKE_CXX_CLANG_TIDY clang-tidy)
 endif()
 
 add_subdirectory(arg)

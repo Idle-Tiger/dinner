@@ -2,15 +2,18 @@
 
 #include "build-info.hpp"
 #include "config.hpp"
+#include "logging.hpp"
 #include "overloaded.hpp"
 #include "sdl.hpp"
 
 #include <SDL_image.h>
 
 #include <iostream>
+#include <variant>
 
-View::View(Story& story)
-    : _story(story)
+View::View(booka::Booka& booka)
+    : _booka(booka)
+    , _actionIterator(_booka.actions().begin())
 {
     auto createWindowFlags = Uint32{0};
     if (config().fullscreen) {
@@ -35,12 +38,20 @@ View::View(Story& story)
             "assets/test-level/fonts/open-sans/OpenSans-Regular.ttf").string().c_str(),
         32)));
 
-    _music.reset(sdlCheck(Mix_LoadMUS(
-        (bi::SOURCE_ROOT / "assets/test-level/music/bg.wav").string().c_str())));
-
-    sdlCheck(Mix_PlayMusic(_music.get(), -1));
-
     update();
+
+    for (const auto& image : _booka.images()) {
+        std::cout << "loading image '" << image.name << "', " <<
+            Size{image.data.size()} << "\n";
+        _textures.push_back(
+            std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>{
+                sdlCheck(IMG_LoadTexture_RW(
+                    _renderer.get(),
+                    SDL_RWFromMem((void*)image.data.data(), (int)image.data.size()),
+                    1)),
+                SDL_DestroyTexture
+            });
+    }
 }
 
 bool View::processInput()
@@ -63,7 +74,7 @@ void View::present()
     sdlCheck(SDL_SetRenderDrawColor(_renderer.get(), 50, 50, 50, 255));
     sdlCheck(SDL_RenderClear(_renderer.get()));
 
-    if (_backgroundIndex >= 0) {
+    if (_backgroundIndex != size_t(-1)) {
         sdlCheck(SDL_RenderCopy(
             _renderer.get(),
             _textures.at(_backgroundIndex).get(),
@@ -81,13 +92,6 @@ void View::present()
     SDL_RenderPresent(_renderer.get());
 }
 
-void View::loadImage(const std::filesystem::path& path)
-{
-    _textures.push_back(std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>{
-        sdlCheck(IMG_LoadTexture(_renderer.get(), path.string().c_str())),
-        SDL_DestroyTexture});
-}
-
 void View::showText(const std::string& text)
 {
     SDL_Surface* textSurface = ttfCheck(TTF_RenderUTF8_Blended_Wrapped(
@@ -103,35 +107,38 @@ void View::showText(const std::string& text)
 
 bool View::update()
 {
-    bool done = false;
-    std::visit(Overloaded{
-        [this](const ShowBackground& bg) {
-            _backgroundIndex = bg.id;
-            _text.reset();
-            std::cout << "showing background: " << _backgroundIndex << "\n";
-            _story.next();
-        },
-        [this](const Text& text) {
-            auto s = std::to_string(text.character) + ": " + text.text;
-            std::cout << "showing text: " << s << "\n";
-            this->showText(s);
-            _story.next();
-        },
-        [this](const Choice& choice) {
-            auto text = std::ostringstream{};
-            for (size_t i = 0; i < choice.selections.size(); i++) {
-                text << i << ": " <<
-                    choice.selections.at(i).text << "\n";
-            }
-            std::cout << "showing text: " << text.str() << "\n";
-            this->showText(text.str());
-            _story.select(0);
-        },
-        [&done](const Finish&) {
-            std::cout << "done\n";
-            done = true;
-        },
-    }, _story.action());
+    if (_actionIterator == _booka.actions().end()) {
+        return false;
+    }
 
-    return !done;
+    for (;;) {
+        bool repeat = false;
+        std::visit(Overloaded{
+            [&] (const booka::ShowImageAction& showImageAction) {
+                std::cout << "show image action\n";
+                _backgroundIndex = showImageAction.imageIndex;
+                _text.reset();
+            },
+            [&] (const booka::ShowTextAction& showTextAction) {
+                std::cout << "show text action\n";
+                auto s = std::string{showTextAction.character} + ": " +
+                    std::string{showTextAction.text};
+                this->showText(s);
+            },
+            [&] (const booka::PlayMusicAction& playMusicAction) {
+                auto music = _booka.music()[playMusicAction.musicIndex];
+                _music.reset(sdlCheck(Mix_LoadMUS_RW(
+                    SDL_RWFromMem((void*)music.data.data(), (int)music.data.size()),
+                    1)));
+                sdlCheck(Mix_PlayMusic(_music.get(), -1));
+                repeat = true;
+            },
+        }, *_actionIterator++);
+
+        if (!repeat) {
+            break;
+        }
+    }
+
+    return true;
 }

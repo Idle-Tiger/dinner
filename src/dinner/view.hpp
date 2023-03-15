@@ -1,6 +1,6 @@
 #pragma once
 
-#include "story.hpp"
+#include <booka.hpp>
 
 #include <SDL.h>
 #include <SDL_mixer.h>
@@ -13,11 +13,10 @@
 
 class View {
 public:
-    View(Story& story);
+    View(booka::Booka& booka);
 
     bool processInput();
     void present();
-    void loadImage(const std::filesystem::path& path);
     void showText(const std::string& text);
 
     void showTest();
@@ -25,14 +24,14 @@ public:
 private:
     bool update();
 
-    Story& _story;
+    booka::Booka& _booka;
+    booka::Actions::Iterator _actionIterator;
+    size_t _backgroundIndex = size_t(-1);
 
     std::unique_ptr<SDL_Window, void(*)(SDL_Window*)> _window {nullptr, SDL_DestroyWindow};
     std::unique_ptr<SDL_Renderer, void(*)(SDL_Renderer*)> _renderer {nullptr, SDL_DestroyRenderer};
 
     std::vector<std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>> _textures;
-
-    int _backgroundIndex = -1;
 
     SDL_Rect _textRect {};
     std::unique_ptr<TTF_Font, void(*)(TTF_Font*)> _font {nullptr, TTF_CloseFont};
