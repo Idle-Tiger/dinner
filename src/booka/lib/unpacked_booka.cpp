@@ -21,7 +21,7 @@ flatbuffers::Offset<fb::Strings> pack(
     auto data = std::string{};
     auto offsets = std::vector<uint32_t>{};
     for (const auto& string : strings) {
-        offsets.push_back(data.length());
+        offsets.push_back((uint32_t)data.length());
         data += string;
     }
 
@@ -36,7 +36,7 @@ flatbuffers::Offset<fb::BinaryData> pack(
     auto data = std::vector<int8_t>{};
     auto offsets = std::vector<uint32_t>{};
     for (const auto& blob : blobs) {
-        offsets.push_back(data.size());
+        offsets.push_back((uint32_t)data.size());
         std::copy(blob.begin(), blob.end(), std::back_inserter(data));
     }
 
@@ -58,11 +58,11 @@ void UnpackedBooka::pack(const std::filesystem::path& path)
             [&](const booka::UnpackedShowTextAction& showTextAction) {
                 auto characterIndex = uint32_t(-1);
                 if (!showTextAction.character.empty()) {
-                    characters.emplace(showTextAction.character, characters.size());
+                    characters.emplace(showTextAction.character, (uint32_t)characters.size());
                     characterIndex = characters.at(showTextAction.character);
                 }
 
-                const uint32_t phraseIndex = phrases.size();
+                const auto phraseIndex = (uint32_t)phrases.size();
                 phrases.push_back(showTextAction.text);
                 showTextActions.emplace_back(characterIndex, phraseIndex);
                 actions.emplace_back(fb::ActionType::Text, phraseIndex);

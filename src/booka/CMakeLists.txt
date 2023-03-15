@@ -9,3 +9,11 @@ target_link_libraries(booka PRIVATE
 )
 
 add_subdirectory(lib)
+
+if(WIN32)
+    add_custom_command(TARGET booka POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_RUNTIME_DLLS:booka> $<TARGET_FILE_DIR:booka>
+        COMMAND_EXPAND_LISTS
+    )
+endif()

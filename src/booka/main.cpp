@@ -85,10 +85,10 @@ void encode(const fs::path& inputFilePath, const fs::path& outputFilePath)
                     match,
                     std::regex{R"_(\[фон "([^"\]]+)" ([^\]]+)\])_"})) {
                 auto imageName = match[1];
-                auto imagePath = inputFilePath.parent_path() / fs::path{match[2]};
+                auto imagePath = inputFilePath.parent_path() / fs::path{match[2].str()};
                 auto imageData = readFile(imagePath);
                 std::cout << "image '" << imageName << "': " << Size{imageData.size()} << "\n";
-                imageIndices[imageName] = unpackedBooka.imageNames.size();
+                imageIndices[imageName] = (uint32_t)unpackedBooka.imageNames.size();
                 unpackedBooka.imageNames.push_back(imageName);
                 unpackedBooka.imageData.push_back(imageData);
             } else if (std::regex_match(
@@ -96,10 +96,10 @@ void encode(const fs::path& inputFilePath, const fs::path& outputFilePath)
                     match,
                     std::regex{R"_(\[музыка "([^"\]]+)" ([^\]]+)\])_"})) {
                 auto musicName = match[1];
-                auto musicPath = inputFilePath.parent_path() / fs::path{match[2]};
+                auto musicPath = inputFilePath.parent_path() / fs::path{match[2].str()};
                 auto musicData = readFile(musicPath);
                 std::cout << "music '" << musicName << "': " << Size{musicData.size()} << "\n";
-                musicIndices[musicName] = unpackedBooka.musicNames.size();
+                musicIndices[musicName] = (uint32_t)unpackedBooka.musicNames.size();
                 unpackedBooka.musicNames.push_back(musicName);
                 unpackedBooka.musicData.push_back(musicData);
             } else {
