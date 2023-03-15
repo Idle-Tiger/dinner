@@ -18,6 +18,7 @@ target_link_libraries(dinner PRIVATE
     SDL2_ttf::SDL2_ttf
     yaml-cpp::yaml-cpp
 )
+add_dependencies(dinner pack-stories)
 
 if(WIN32)
     add_custom_command(TARGET dinner POST_BUILD

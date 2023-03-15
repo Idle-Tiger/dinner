@@ -32,6 +32,6 @@ pack_story(
         test-1/music/feast.wav
 )
 
-add_custom_target(pack_stories ALL
+add_custom_target(pack-stories ALL
     DEPENDS ${PACKED_STORY_FILES}
 )
