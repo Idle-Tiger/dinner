@@ -27,9 +27,15 @@ int main(int argc, char* argv[]) try
         .keys("--story")
         .defaultValue(bi::BUILD_ROOT / "assets" / "stories" / "test-1.booka")
         .help("path to story booka file");
+    auto mute = arg::flag()
+        .keys("--mute")
+        .help("mute all game sound");
     arg::parse(argc, argv);
 
     processConfig();
+    if (mute) {
+        config().mute = true;
+    }
 
     std::cout << "initializing SDL\n";
     sdl::check(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS));

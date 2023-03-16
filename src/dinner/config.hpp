@@ -9,9 +9,10 @@ struct Config {
     int windowHeight = 768;
     int gameFps = 60;
     bool fullscreen = true;
+    bool mute = false;
 };
 
-const Config& config();
+Config& config();
 
 void loadConfigFromFile(const std::filesystem::path& path);
 void saveConfigToFile(const std::filesystem::path& path);

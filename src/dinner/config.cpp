@@ -27,11 +27,12 @@ void serialize(Config& config, const S& s)
     s(config.windowHeight, "window height");
     s(config.gameFps, "game fps");
     s(config.fullscreen, "fullscreen");
+    s(config.mute, "mute");
 }
 
 } // namespace
 
-const Config& config()
+Config& config()
 {
     return globalConfig;
 }

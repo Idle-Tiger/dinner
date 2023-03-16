@@ -122,7 +122,9 @@ bool View::update()
                 _music.reset(sdl::check(Mix_LoadMUS_RW(
                     SDL_RWFromMem((void*)music.data.data(), (int)music.data.size()),
                     1)));
-                sdl::check(Mix_PlayMusic(_music.get(), -1));
+                if (!config().mute) {
+                    sdl::check(Mix_PlayMusic(_music.get(), -1));
+                }
                 repeat = true;
             },
         }, *_actionIterator++);
