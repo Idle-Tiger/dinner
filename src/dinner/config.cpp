@@ -1,5 +1,7 @@
 #include "config.hpp"
 
+#include "fs.hpp"
+
 #include <yaml-cpp/yaml.h>
 
 #include <cstdlib>
@@ -86,6 +88,7 @@ void saveConfigToFile(const fs::path& path)
             });
     }
 
+    fs::create_directories(path.parent_path());
     auto output = std::ofstream{path};
     output.exceptions(std::ios::badbit | std::ios::failbit);
     output << yaml;
@@ -93,7 +96,7 @@ void saveConfigToFile(const fs::path& path)
 
 void processConfig()
 {
-    auto path = standardConfigPath();
+    auto path = paths::userConfigPath();
     if (fs::exists(path)) {
         loadConfigFromFile(path);
     }
