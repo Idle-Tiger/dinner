@@ -1,6 +1,8 @@
 #pragma once
 
-#include <booka.hpp>
+#include "booka.hpp"
+#include "sdl.hpp"
+#include "widget.hpp"
 
 #include <SDL.h>
 #include <SDL_mixer.h>
@@ -8,6 +10,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -17,7 +20,6 @@ public:
 
     bool processInput();
     void present();
-    void showText(const std::string& text);
 
     void showTest();
 
@@ -28,13 +30,14 @@ private:
     booka::Actions::Iterator _actionIterator;
     size_t _backgroundIndex = size_t(-1);
 
-    std::unique_ptr<SDL_Window, void(*)(SDL_Window*)> _window {nullptr, SDL_DestroyWindow};
-    std::unique_ptr<SDL_Renderer, void(*)(SDL_Renderer*)> _renderer {nullptr, SDL_DestroyRenderer};
+    sdl::Window _window;
+    sdl::Renderer _renderer;
 
     std::vector<std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>> _textures;
 
-    SDL_Rect _textRect {};
-    std::unique_ptr<TTF_Font, void(*)(TTF_Font*)> _font {nullptr, TTF_CloseFont};
-    std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)> _text {nullptr, SDL_DestroyTexture};
+    ttf::Font _font;
+    std::optional<SpeechBox> _speechBox;
     std::unique_ptr<Mix_Music, void(*)(Mix_Music*)> _music {nullptr, Mix_FreeMusic};
+
+    std::vector<std::unique_ptr<Widget>> _widgets;
 };

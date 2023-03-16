@@ -19,24 +19,30 @@ View::View(booka::Booka& booka)
     if (config().fullscreen) {
         createWindowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
-    _window.reset(sdlCheck(SDL_CreateWindow(
-        config().windowTitle.c_str(),
+    _window = sdl::Window{
+        config().windowTitle,
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         config().windowWidth,
         config().windowHeight,
-        createWindowFlags)));
-    _renderer.reset(sdlCheck(SDL_CreateRenderer(
-        _window.get(),
+        createWindowFlags};
+    _renderer = sdl::Renderer{
+        _window,
         -1,
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC)));
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC};
 
-    sdlCheck(SDL_SetRenderDrawBlendMode(_renderer.get(), SDL_BLENDMODE_BLEND));
+    sdl::check(SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_BLEND));
 
-    _font.reset(ttfCheck(TTF_OpenFont(
-        (bi::SOURCE_ROOT /
-            "assets/test-level/fonts/open-sans/OpenSans-Regular.ttf").string().c_str(),
-        32)));
+    _font = ttf::Font{
+        bi::SOURCE_ROOT /
+            "assets/test-level/fonts/open-sans/OpenSans-Regular.ttf",
+        32};
+
+    _speechBox.emplace(
+        _renderer,
+        50, 780, 1820, 250,
+        _font,
+        SDL_Color{0, 0, 0, 255});
 
     update();
 
@@ -45,8 +51,8 @@ View::View(booka::Booka& booka)
             Size{image.data.size()} << "\n";
         _textures.push_back(
             std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>{
-                sdlCheck(IMG_LoadTexture_RW(
-                    _renderer.get(),
+                sdl::check(IMG_LoadTexture_RW(
+                    _renderer,
                     SDL_RWFromMem((void*)image.data.data(), (int)image.data.size()),
                     1)),
                 SDL_DestroyTexture
@@ -58,11 +64,13 @@ bool View::processInput()
 {
     auto event = SDL_Event{};
     while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-            case SDL_QUIT:
-                return false;
-            case SDL_MOUSEBUTTONDOWN:
-                return update();
+        if (event.type == SDL_QUIT) {
+            return false;
+        }
+
+        if (event.type == SDL_MOUSEBUTTONDOWN &&
+                event.button.button == SDL_BUTTON_LEFT) {
+            return update();
         }
     }
 
@@ -71,38 +79,22 @@ bool View::processInput()
 
 void View::present()
 {
-    sdlCheck(SDL_SetRenderDrawColor(_renderer.get(), 50, 50, 50, 255));
-    sdlCheck(SDL_RenderClear(_renderer.get()));
+    sdl::check(SDL_SetRenderDrawColor(_renderer, 50, 50, 50, 255));
+    sdl::check(SDL_RenderClear(_renderer));
 
     if (_backgroundIndex != size_t(-1)) {
-        sdlCheck(SDL_RenderCopy(
-            _renderer.get(),
+        sdl::check(SDL_RenderCopy(
+            _renderer,
             _textures.at(_backgroundIndex).get(),
             nullptr,
             nullptr));
     }
 
-    if (_text) {
-        const auto textBackgroundRect = SDL_Rect{50, 780, 1820, 250};
-        sdlCheck(SDL_SetRenderDrawColor(_renderer.get(), 0x99, 0xcc, 0xff, 200));
-        sdlCheck(SDL_RenderFillRect(_renderer.get(), &textBackgroundRect));
-        sdlCheck(SDL_RenderCopy(_renderer.get(), _text.get(), nullptr, &_textRect));
+    if (_speechBox.value().visible) {
+        _speechBox.value().render();
     }
 
-    SDL_RenderPresent(_renderer.get());
-}
-
-void View::showText(const std::string& text)
-{
-    SDL_Surface* textSurface = ttfCheck(TTF_RenderUTF8_Blended_Wrapped(
-        _font.get(),
-        text.c_str(),
-        SDL_Color{0, 0, 0, 255},
-        1780));
-    _textRect = SDL_Rect{70, 800, textSurface->w, textSurface->h};
-    _text.reset(sdlCheck(
-        SDL_CreateTextureFromSurface(_renderer.get(), textSurface)));
-    SDL_FreeSurface(textSurface);
+    SDL_RenderPresent(_renderer);
 }
 
 bool View::update()
@@ -117,20 +109,20 @@ bool View::update()
             [&] (const booka::ShowImageAction& showImageAction) {
                 std::cout << "show image action\n";
                 _backgroundIndex = showImageAction.imageIndex;
-                _text.reset();
+                _speechBox.value().visible = false;
             },
             [&] (const booka::ShowTextAction& showTextAction) {
                 std::cout << "show text action\n";
                 auto s = std::string{showTextAction.character} + ": " +
                     std::string{showTextAction.text};
-                this->showText(s);
+                _speechBox.value().showText(s);
             },
             [&] (const booka::PlayMusicAction& playMusicAction) {
                 auto music = _booka.music()[playMusicAction.musicIndex];
-                _music.reset(sdlCheck(Mix_LoadMUS_RW(
+                _music.reset(sdl::check(Mix_LoadMUS_RW(
                     SDL_RWFromMem((void*)music.data.data(), (int)music.data.size()),
                     1)));
-                sdlCheck(Mix_PlayMusic(_music.get(), -1));
+                sdl::check(Mix_PlayMusic(_music.get(), -1));
                 repeat = true;
             },
         }, *_actionIterator++);

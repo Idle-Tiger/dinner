@@ -32,12 +32,12 @@ int main(int argc, char* argv[]) try
     processConfig();
 
     std::cout << "initializing SDL\n";
-    sdlCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS));
-    sdlCheck(TTF_Init());
+    sdl::check(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS));
+    sdl::check(TTF_Init());
     constexpr auto imgInitFlags = IMG_INIT_PNG;
-    sdlCheck(IMG_Init(imgInitFlags) == imgInitFlags);
+    sdl::check(IMG_Init(imgInitFlags) == imgInitFlags);
 
-    sdlCheck(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096));
+    sdl::check(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096));
     Mix_VolumeMusic(40);
 
     {
