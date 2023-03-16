@@ -38,11 +38,19 @@ View::View(booka::Booka& booka)
             "assets/test-level/fonts/open-sans/OpenSans-Regular.ttf",
         32};
 
+    _characterBox.emplace(
+        _renderer,
+        50, 700, 300, 80,
+        _font,
+        SDL_Color{0, 0, 0, 255},
+        SpeechBox::Mode::Flexi);
+
     _speechBox.emplace(
         _renderer,
-        50, 780, 1820, 250,
+        50, 780, 1824, 256,
         _font,
-        SDL_Color{0, 0, 0, 255});
+        SDL_Color{0, 0, 0, 255},
+        SpeechBox::Mode::Wrappy);
 
     update();
 
@@ -64,13 +72,17 @@ bool View::processInput()
 {
     auto event = SDL_Event{};
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT) {
+        if (event.type == SDL_QUIT ||
+                (event.type == SDL_KEYDOWN &&
+                    event.key.keysym.sym == SDLK_ESCAPE)) {
             return false;
         }
 
         if (event.type == SDL_MOUSEBUTTONDOWN &&
                 event.button.button == SDL_BUTTON_LEFT) {
-            return update();
+            if (!update()) {
+                return false;
+            }
         }
     }
 
@@ -90,11 +102,10 @@ void View::present()
             nullptr));
     }
 
-    if (_speechBox.value().visible) {
-        _speechBox.value().render();
-    }
+    _characterBox.value().render();
+    _speechBox.value().render();
 
-    SDL_RenderPresent(_renderer);
+    _renderer.present();
 }
 
 bool View::update()
@@ -109,13 +120,21 @@ bool View::update()
             [&] (const booka::ShowImageAction& showImageAction) {
                 std::cout << "show image action\n";
                 _backgroundIndex = showImageAction.imageIndex;
-                _speechBox.value().visible = false;
+                _speechBox.value().hide();
+
+
+                // TODO: remove
+                repeat = true;
             },
             [&] (const booka::ShowTextAction& showTextAction) {
+                if (showTextAction.character.empty()) {
+                    _characterBox->hide();
+                } else {
+                    _characterBox->showText(std::string{showTextAction.character});
+                }
+
                 std::cout << "show text action\n";
-                auto s = std::string{showTextAction.character} + ": " +
-                    std::string{showTextAction.text};
-                _speechBox.value().showText(s);
+                _speechBox.value().showText(std::string{showTextAction.text});
             },
             [&] (const booka::PlayMusicAction& playMusicAction) {
                 auto music = _booka.music()[playMusicAction.musicIndex];

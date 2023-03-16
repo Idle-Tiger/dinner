@@ -3,10 +3,12 @@
 #include "error.hpp"
 
 #include <SDL.h>
+#include <SDL_image.h>
 #include <SDL_ttf.h>
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <source_location>
 
 namespace sdl {
@@ -37,6 +39,43 @@ T* check(
     }
     return ptr;
 }
+
+class Surface {
+public:
+    Surface() = default;
+
+    explicit Surface(SDL_Surface* raw)
+    {
+        _ptr.reset(raw);
+    }
+
+    SDL_Surface* operator->() { return _ptr.get(); }
+
+    operator SDL_Surface*() { return _ptr.get(); }
+    operator const SDL_Surface*() const { return _ptr.get(); }
+
+private:
+    std::unique_ptr<SDL_Surface, void(*)(SDL_Surface*)> _ptr {
+        nullptr, SDL_FreeSurface};
+};
+
+class Texture {
+public:
+    Texture() = default;
+
+    explicit Texture(SDL_Texture* raw)
+    {
+        _ptr.reset(raw);
+    }
+
+    explicit operator bool() const noexcept { return !!_ptr; }
+    operator SDL_Texture*() { return _ptr.get(); }
+    operator const SDL_Texture*() const { return _ptr.get(); }
+
+private:
+    std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)> _ptr {
+        nullptr, SDL_DestroyTexture};
+};
 
 class Window {
 public:
@@ -82,49 +121,44 @@ public:
     operator SDL_Renderer*() { return _ptr.get(); }
     operator const SDL_Renderer*() const { return _ptr.get(); }
 
+    void fillRect(const SDL_Rect& rect)
+    {
+        check(SDL_RenderFillRect(_ptr.get(), &rect));
+    }
+
+    void copy(
+        Texture& texture,
+        const std::optional<SDL_Rect>& srcrect,
+        const std::optional<SDL_Rect>& dstrect)
+    {
+        const SDL_Rect* s = srcrect ? &*srcrect : nullptr;
+        const SDL_Rect* d = dstrect ? &*dstrect : nullptr;
+        check(SDL_RenderCopy(_ptr.get(), texture, s, d));
+    }
+
+    void present()
+    {
+        SDL_RenderPresent(_ptr.get());
+    }
+
 private:
     std::unique_ptr<SDL_Renderer, void(*)(SDL_Renderer*)> _ptr {
         nullptr, SDL_DestroyRenderer};
 };
 
-class Surface {
-public:
-    Surface() = default;
-
-    explicit Surface(SDL_Surface* raw)
-    {
-        _ptr.reset(raw);
-    }
-
-    SDL_Surface* operator->() { return _ptr.get(); }
-
-    operator SDL_Surface*() { return _ptr.get(); }
-    operator const SDL_Surface*() const { return _ptr.get(); }
-
-private:
-    std::unique_ptr<SDL_Surface, void(*)(SDL_Surface*)> _ptr {
-        nullptr, SDL_FreeSurface};
-};
-
-class Texture {
-public:
-    Texture() = default;
-
-    explicit Texture(SDL_Texture* raw)
-    {
-        _ptr.reset(raw);
-    }
-
-    explicit operator bool() const noexcept { return !!_ptr; }
-    operator SDL_Texture*() { return _ptr.get(); }
-    operator const SDL_Texture*() const { return _ptr.get(); }
-
-private:
-    std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)> _ptr {
-        nullptr, SDL_DestroyTexture};
-};
-
 } // namespace sdl
+
+namespace img {
+
+inline sdl::Texture loadTexture(
+    sdl::Renderer& renderer, const std::filesystem::path& path)
+{
+    return sdl::Texture{
+        sdl::check(IMG_LoadTexture(renderer, path.string().c_str()))
+    };
+}
+
+} // namespace img
 
 namespace ttf {
 

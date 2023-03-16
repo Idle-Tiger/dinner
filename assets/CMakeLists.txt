@@ -12,7 +12,7 @@ macro(pack_story)
     list(APPEND PACKED_STORY_FILES "${output_file}")
 
     add_custom_command(
-        COMMENT "packing story: ${PACK_STORY_NAME}"
+        COMMENT "packing story: ${PACK_STORY_NAME} (${output_file})"
         COMMAND
             $<TARGET_FILE:booka>
             encode
