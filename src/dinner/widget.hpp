@@ -2,6 +2,7 @@
 
 #include "sdl.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 
