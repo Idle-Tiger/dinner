@@ -29,30 +29,6 @@ void serialize(Config& config, const S& s)
     s(config.fullscreen, "fullscreen");
 }
 
-fs::path standardConfigPath()
-{
-    // TODO: write proper path deduction
-
-    constexpr auto fileName = "dinner.yaml";
-
-    if (const char* xdgConfigHome = std::getenv("XDG_CONFIG_HOME")) {
-        return fs::path{xdgConfigHome} / fileName;
-    }
-
-    auto homeVarName = std::string{};
-#ifdef _WIN32
-    homeVarName = "HOMEPATH";
-#else
-    homeVarName = "HOME";
-#endif
-
-    if (const char* home = std::getenv(homeVarName.c_str())) {
-        return fs::path{home} / ".config" / fileName;
-    }
-    throw Error{} <<
-        "cannot deduce config path: HOME environment variable is not set";
-}
-
 } // namespace
 
 const Config& config()

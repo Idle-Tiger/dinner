@@ -33,6 +33,18 @@ private:
 fs::path userConfigPath()
 {
 #ifdef __linux__
+    auto configDirectory = fs::path{};
+    if (const char* xdgConfigHome = std::getenv("XDG_CONFIG_HOME")) {
+        configDirectory = fs::path{xdgConfigHome};
+    } else if (const char* home = std::getenv("HOME")) {
+        configDirectory = fs::path{home} / ".config";
+    } else {
+        throw Error{} <<
+            "cannot deduce config path: XDG_CONFIG_HOME and HOME environment "
+            "variables are not set";
+    }
+
+    return configDirectory / "dinner.yaml";
 #elif defined(_WIN32)
     PWSTR localAppData;
     HRESULT result = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &localAppData);
@@ -50,6 +62,7 @@ fs::path userConfigPath()
 fs::path globalConfigPath()
 {
 #ifdef __linux__
+    return fs::path{"/etc/dinner.yaml"};
 #elif defined(_WIN32)
     PWSTR programData;
     HRESULT result = SHGetKnownFolderPath(FOLDERID_ProgramData, 0, NULL, &programData);
