@@ -17,7 +17,7 @@ Manifest loadManifestFromYaml(const fs::path& yamlManifestPath)
 {
     auto manifest = Manifest{};
 
-    auto yaml = YAML::LoadFile(yamlManifestPath);
+    auto yaml = YAML::LoadFile(yamlManifestPath.string());
     for (const auto& yamlResource : yaml["sources"]) {
         manifest.sources.push_back(Source{
             .name = yamlResource["name"].as<std::string>(),
@@ -90,13 +90,13 @@ Repa::Repa(const std::filesystem::path& path)
     , _resources(_repa->resourceNames(), _repa->resourceData())
 {
     for (size_t i = 0; i < _resources.size(); i++) {
-        _indexByName[std::string{_resources[i].name}] = i;
+        _indexByName[std::string{_resources[(uint32_t)i].name}] = i;
     }
 }
 
 std::span<const std::byte> Repa::operator()(size_t resourceIndex) const
 {
-    return _resources[resourceIndex].data;
+    return _resources[(uint32_t)resourceIndex].data;
 }
 
 std::span<const std::byte> Repa::operator()(

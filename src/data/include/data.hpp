@@ -2,6 +2,12 @@
 
 #include "data_generated.h"
 
+#include <cstddef>
+#include <span>
+#include <string>
+#include <string_view>
+#include <vector>
+
 namespace data {
 
 template <class Container>
