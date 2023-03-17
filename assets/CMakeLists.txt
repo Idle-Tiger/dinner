@@ -35,3 +35,31 @@ pack_story(
 add_custom_target(pack-stories ALL
     DEPENDS ${PACKED_STORY_FILES}
 )
+
+add_custom_command(
+    COMMENT "packing resources as described in ${CMAKE_CURRENT_SOURCE_DIR}/manifest.yaml"
+    COMMAND $<TARGET_FILE:repa>
+        --manifest "${CMAKE_CURRENT_SOURCE_DIR}/manifest.yaml"
+        --output-header "${CMAKE_CURRENT_BINARY_DIR}/include/resources.hpp"
+        --output-data-file "${CMAKE_CURRENT_BINARY_DIR}/resources.fb"
+    DEPENDS
+        repa
+        "${CMAKE_CURRENT_SOURCE_DIR}/manifest.yaml"
+    OUTPUT
+        "${CMAKE_CURRENT_BINARY_DIR}/include/resources.hpp"
+        "${CMAKE_CURRENT_BINARY_DIR}/resources.fb"
+)
+
+add_custom_target(pack-resources ALL
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/manifest.yaml"
+        "${CMAKE_CURRENT_BINARY_DIR}/include/resources.hpp"
+        "${CMAKE_CURRENT_BINARY_DIR}/resources.fb"
+)
+add_dependencies(pack-resources repa)
+
+add_library(resources INTERFACE)
+target_include_directories(resources INTERFACE
+    "${CMAKE_CURRENT_BINARY_DIR}/include"
+)
+add_dependencies(resources pack-resources)

@@ -1,0 +1,7 @@
+sources:
+  - name: menu-1
+    path: music/menu-1.wav
+  - name: border-1
+    path: textures/border-1.png
+  - name: font-open-sans
+    path: test-level/fonts/open-sans/OpenSans-Regular.ttf

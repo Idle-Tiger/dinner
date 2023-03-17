@@ -1,0 +1,10 @@
+include "data.fbs";
+
+namespace repa.fb;
+
+table Repa {
+  resource_names:data.fb.Strings;
+  resource_data:data.fb.BinaryData;
+}
+
+root_type Repa;

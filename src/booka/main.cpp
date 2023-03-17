@@ -3,6 +3,7 @@
 
 #include "arg.hpp"
 #include "error.hpp"
+#include "fs.hpp"
 #include "logging.hpp"
 #include "overloaded.hpp"
 
@@ -17,21 +18,6 @@
 #include <string>
 
 namespace fs = std::filesystem;
-
-std::vector<char> readFile(const fs::path& path)
-{
-    if (!fs::exists(path)) {
-        throw Error{} << "file does not exist: " << path;
-    }
-    auto input = std::ifstream{};
-    input.exceptions(std::ios::badbit | std::ios::failbit);
-    input.open(path, std::ios::binary | std::ios::ate);
-    const auto fileSize = input.tellg();
-    input.seekg(0, std::ios::beg);
-    auto data = std::vector<char>(fileSize);
-    input.read(data.data(), fileSize);
-    return data;
-}
 
 enum class Action {
     Encode,
@@ -86,7 +72,7 @@ void encode(const fs::path& inputFilePath, const fs::path& outputFilePath)
                     std::regex{R"_(\[фон "([^"\]]+)" ([^\]]+)\])_"})) {
                 auto imageName = match[1];
                 auto imagePath = inputFilePath.parent_path() / fs::path{match[2].str()};
-                auto imageData = readFile(imagePath);
+                auto imageData = file::read(imagePath);
                 std::cout << "image '" << imageName << "': " << Size{imageData.size()} << "\n";
                 imageIndices[imageName] = (uint32_t)unpackedBooka.imageNames.size();
                 unpackedBooka.imageNames.push_back(imageName);
@@ -97,7 +83,7 @@ void encode(const fs::path& inputFilePath, const fs::path& outputFilePath)
                     std::regex{R"_(\[музыка "([^"\]]+)" ([^\]]+)\])_"})) {
                 auto musicName = match[1];
                 auto musicPath = inputFilePath.parent_path() / fs::path{match[2].str()};
-                auto musicData = readFile(musicPath);
+                auto musicData = file::read(musicPath);
                 std::cout << "music '" << musicName << "': " << Size{musicData.size()} << "\n";
                 musicIndices[musicName] = (uint32_t)unpackedBooka.musicNames.size();
                 unpackedBooka.musicNames.push_back(musicName);

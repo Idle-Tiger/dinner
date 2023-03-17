@@ -1,0 +1,11 @@
+namespace data.fb;
+
+table Strings {
+  data:string;
+  offsets:[uint32];
+}
+
+table BinaryData {
+  data:[uint8];
+  offsets:[uint32];
+}

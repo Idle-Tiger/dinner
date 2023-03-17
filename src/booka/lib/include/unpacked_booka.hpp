@@ -33,9 +33,9 @@ struct UnpackedNamedData {
 
 struct UnpackedBooka {
     std::vector<std::string> imageNames;
-    std::vector<std::vector<char>> imageData;
+    std::vector<std::vector<std::byte>> imageData;
     std::vector<std::string> musicNames;
-    std::vector<std::vector<char>> musicData;
+    std::vector<std::vector<std::byte>> musicData;
     std::vector<UnpackedAction> actions;
 
     void pack(const std::filesystem::path& path);

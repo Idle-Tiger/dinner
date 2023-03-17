@@ -4,6 +4,8 @@
 #include "config.hpp"
 #include "logging.hpp"
 #include "overloaded.hpp"
+#include "repa.hpp"
+#include "resources.hpp"
 #include "sdl.hpp"
 
 #include <SDL_image.h>
@@ -38,14 +40,14 @@ View::View(booka::Booka& booka)
             "assets/test-level/fonts/open-sans/OpenSans-Regular.ttf",
         32};
 
-    _characterBox.emplace(
+    _characterBox = _widgets.add<SpeechBox>(
         _renderer,
         50, 700, 300, 80,
         _font,
         SDL_Color{0, 0, 0, 255},
         SpeechBox::Mode::Flexi);
 
-    _speechBox.emplace(
+    _speechBox = _widgets.add<SpeechBox>(
         _renderer,
         50, 780, 1824, 256,
         _font,
@@ -61,7 +63,8 @@ View::View(booka::Booka& booka)
             std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>{
                 sdl::check(IMG_LoadTexture_RW(
                     _renderer,
-                    SDL_RWFromMem((void*)image.data.data(), (int)image.data.size()),
+                    sdl::check(SDL_RWFromMem(
+                        (void*)image.data.data(), (int)image.data.size())),
                     1)),
                 SDL_DestroyTexture
             });
@@ -102,8 +105,8 @@ void View::present()
             nullptr));
     }
 
-    _characterBox.value().render();
-    _speechBox.value().render();
+    _characterBox->render();
+    _speechBox->render();
 
     _renderer.present();
 }
@@ -120,7 +123,7 @@ bool View::update()
             [&] (const booka::ShowImageAction& showImageAction) {
                 std::cout << "show image action\n";
                 _backgroundIndex = showImageAction.imageIndex;
-                _speechBox.value().hide();
+                _speechBox->hide();
 
 
                 // TODO: remove
@@ -134,7 +137,7 @@ bool View::update()
                 }
 
                 std::cout << "show text action\n";
-                _speechBox.value().showText(std::string{showTextAction.text});
+                _speechBox->showText(std::string{showTextAction.text});
             },
             [&] (const booka::PlayMusicAction& playMusicAction) {
                 auto music = _booka.music()[playMusicAction.musicIndex];

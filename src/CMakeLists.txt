@@ -9,9 +9,11 @@ endif()
 add_subdirectory(arg)
 add_subdirectory(tempo)
 
-add_subdirectory(booka)
-
 add_subdirectory(base)
+add_subdirectory(data)
+
+add_subdirectory(booka)
+add_subdirectory(repa)
 
 add_subdirectory(dinner)
 add_subdirectory(storyteller)

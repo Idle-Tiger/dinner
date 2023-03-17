@@ -1,5 +1,6 @@
 #include "unpacked_booka.hpp"
 
+#include "fs.hpp"
 #include "overloaded.hpp"
 
 #include <fstream>
@@ -11,40 +12,6 @@
 #include <iostream>
 
 namespace booka {
-
-namespace {
-
-flatbuffers::Offset<fb::Strings> pack(
-    flatbuffers::FlatBufferBuilder& builder,
-    const std::vector<std::string>& strings)
-{
-    auto data = std::string{};
-    auto offsets = std::vector<uint32_t>{};
-    for (const auto& string : strings) {
-        offsets.push_back((uint32_t)data.length());
-        data += string;
-    }
-
-    return fb::CreateStrings(
-        builder, builder.CreateString(data), builder.CreateVector(offsets));
-}
-
-flatbuffers::Offset<fb::BinaryData> pack(
-    flatbuffers::FlatBufferBuilder& builder,
-    const std::vector<std::vector<char>>& blobs)
-{
-    auto data = std::vector<int8_t>{};
-    auto offsets = std::vector<uint32_t>{};
-    for (const auto& blob : blobs) {
-        offsets.push_back((uint32_t)data.size());
-        std::copy(blob.begin(), blob.end(), std::back_inserter(data));
-    }
-
-    return fb::CreateBinaryData(
-        builder, builder.CreateVector(data), builder.CreateVector(offsets));
-}
-
-} // namespace
 
 void UnpackedBooka::pack(const std::filesystem::path& path)
 {
@@ -84,20 +51,19 @@ void UnpackedBooka::pack(const std::filesystem::path& path)
     auto builder = flatbuffers::FlatBufferBuilder{};
     auto booka = fb::CreateBooka(
         builder,
-        ::booka::pack(builder, imageNames),
-        ::booka::pack(builder, imageData),
-        ::booka::pack(builder, musicNames),
-        ::booka::pack(builder, musicData),
-        ::booka::pack(builder, characterNames),
-        ::booka::pack(builder, phrases),
+        data::pack(builder, imageNames),
+        data::pack(builder, imageData),
+        data::pack(builder, musicNames),
+        data::pack(builder, musicData),
+        data::pack(builder, characterNames),
+        data::pack(builder, phrases),
         builder.CreateVectorOfStructs(showTextActions),
         builder.CreateVectorOfStructs(actions));
     builder.Finish(booka);
 
-    auto output = std::ofstream{path, std::ios::binary};
-    output.exceptions(std::ios::badbit | std::ios::failbit);
-    output.write(
-        reinterpret_cast<const char*>(builder.GetBufferPointer()),
+    file::write(
+        path,
+        reinterpret_cast<const std::byte*>(builder.GetBufferPointer()),
         builder.GetSize());
 }
 

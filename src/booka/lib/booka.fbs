@@ -1,14 +1,6 @@
+include "data.fbs";
+
 namespace booka.fb;
-
-table Strings {
-  data:string;
-  offsets:[uint32];
-}
-
-table BinaryData {
-  data:[byte];
-  offsets:[uint32];
-}
 
 enum ActionType : uint8 {
   Image,
@@ -27,12 +19,12 @@ struct Action {
 }
 
 table Booka {
-  image_names:Strings;
-  image_data:BinaryData;
-  music_names:Strings;
-  music_data:BinaryData;
-  character_names:Strings;
-  phrases:Strings;
+  image_names:data.fb.Strings;
+  image_data:data.fb.BinaryData;
+  music_names:data.fb.Strings;
+  music_data:data.fb.BinaryData;
+  character_names:data.fb.Strings;
+  phrases:data.fb.Strings;
   show_text_actions:[ShowTextAction];
   story:[Action];
 }

@@ -36,9 +36,8 @@ private:
     std::vector<std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>> _textures;
 
     ttf::Font _font;
-    std::optional<SpeechBox> _characterBox;
-    std::optional<SpeechBox> _speechBox;
+    SpeechBox* _characterBox = nullptr;
+    SpeechBox* _speechBox = nullptr;
+    Widgets _widgets;
     std::unique_ptr<Mix_Music, void(*)(Mix_Music*)> _music {nullptr, Mix_FreeMusic};
-
-    std::vector<std::unique_ptr<Widget>> _widgets;
 };

@@ -3,8 +3,11 @@
 #include "sdl.hpp"
 
 #include <algorithm>
+#include <concepts>
 #include <cstdint>
+#include <memory>
 #include <string>
+#include <vector>
 
 class Widget {
 public:
@@ -17,6 +20,26 @@ public:
     {
         return false;
     }
+};
+
+class Widgets {
+public:
+    template <class W, class... Args>
+    requires std::derived_from<W, Widget> && std::constructible_from<W, Args...>
+    W* add(Args&&... args)
+    {
+        auto uniquePtr = std::make_unique<W>(std::forward<Args>(args)...);
+        W* rawPtr = uniquePtr.get();
+        _widgets.push_back(std::move(uniquePtr));
+        return rawPtr;
+    }
+
+private:
+    std::vector<std::unique_ptr<Widget>> _widgets;
+};
+
+class Button {
+public:
 };
 
 class SpeechBox : public Widget {

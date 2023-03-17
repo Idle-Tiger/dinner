@@ -1,5 +1,7 @@
 #include "config.hpp"
 #include "overloaded.hpp"
+#include "repa.hpp"
+#include "resources.hpp"
 #include "sdl.hpp"
 #include "view.hpp"
 
@@ -31,6 +33,8 @@ int main(int argc, char* argv[]) try
         .keys("--mute")
         .help("mute all game sound");
     arg::parse(argc, argv);
+
+    auto repa = repa::Repa{bi::BUILD_ROOT / "assets" / "resources.fb"};
 
     processConfig();
     if (mute) {

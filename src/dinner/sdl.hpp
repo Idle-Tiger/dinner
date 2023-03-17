@@ -10,6 +10,7 @@
 #include <memory>
 #include <optional>
 #include <source_location>
+#include <span>
 
 namespace sdl {
 
@@ -185,6 +186,19 @@ T* check(
 class Font {
 public:
     Font() = default;
+
+    Font(
+        const std::span<const std::byte>& data,
+        int ptsize,
+        std::source_location sourceLocation = std::source_location::current())
+    {
+        _ptr.reset(check(
+            TTF_OpenFontRW(
+                sdl::check(SDL_RWFromMem((void*)data.data(), (int)data.size())),
+                1,
+                ptsize),
+            sourceLocation));
+    }
 
     Font(
         const std::filesystem::path& path,

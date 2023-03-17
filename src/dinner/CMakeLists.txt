@@ -1,4 +1,5 @@
 add_executable(dinner
+    client.cpp
     config.cpp
     main.cpp
     view.cpp
@@ -10,6 +11,8 @@ target_link_libraries(dinner PRIVATE
 
     base
     booka-lib
+    repa-lib
+    resources
 
     SDL2::SDL2
     SDL2::SDL2main

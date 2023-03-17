@@ -3,6 +3,7 @@
 #include "error.hpp"
 
 #include <concepts>
+#include <fstream>
 #include <utility>
 
 #ifdef __linux__
@@ -78,3 +79,36 @@ fs::path globalConfigPath()
 }
 
 } // namespace paths
+
+namespace file {
+
+std::vector<std::byte> read(const fs::path& path)
+{
+    if (!fs::exists(path)) {
+        throw Error{} << "file does not exist: " << path;
+    }
+    auto input = std::ifstream{};
+    input.exceptions(std::ios::badbit | std::ios::failbit);
+    input.open(path, std::ios::binary | std::ios::ate);
+    const auto fileSize = input.tellg();
+    input.seekg(0, std::ios::beg);
+    auto data = std::vector<std::byte>(fileSize);
+    input.read(reinterpret_cast<char*>(data.data()), fileSize);
+    return data;
+}
+
+void write(const fs::path& path, const std::byte* data, size_t size)
+{
+    auto output = std::ofstream{path, std::ios::binary};
+    output.exceptions(std::ios::badbit | std::ios::failbit);
+    output.write(
+        reinterpret_cast<const char*>(data),
+        static_cast<std::streamsize>(size));
+}
+
+void write(const fs::path& path, const std::span<const std::byte>& data)
+{
+    write(path, data.data(), data.size());
+}
+
+} // namespace file
