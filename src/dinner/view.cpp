@@ -16,6 +16,7 @@
 View::View(booka::Booka& booka)
     : _booka(booka)
     , _actionIterator(_booka.actions().begin())
+    , _repa(bi::BUILD_ROOT / "assets" / "resources.fb")
 {
     auto createWindowFlags = Uint32{0};
     if (config().fullscreen) {
@@ -35,10 +36,7 @@ View::View(booka::Booka& booka)
 
     sdl::check(SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_BLEND));
 
-    _font = ttf::Font{
-        bi::SOURCE_ROOT /
-            "assets/test-level/fonts/open-sans/OpenSans-Regular.ttf",
-        32};
+    _font = ttf::Font{_repa((size_t)R::FONT_OPEN_SANS), 32};
 
     _characterBox = _widgets.add<SpeechBox>(
         _renderer,
@@ -54,20 +52,21 @@ View::View(booka::Booka& booka)
         SDL_Color{0, 0, 0, 255},
         SpeechBox::Mode::Wrappy);
 
+    _widgets.add<Button>(
+        1670, 50, 200, 50,
+        _repa((size_t)R::FONT_OPEN_SANS),
+        "Quit",
+        [this] {
+            std::cout << "quit button pressed\n";
+            _signalToExit = true;
+        });
+
     update();
 
     for (const auto& image : _booka.images()) {
         std::cout << "loading image '" << image.name << "', " <<
             Size{image.data.size()} << "\n";
-        _textures.push_back(
-            std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>{
-                sdl::check(IMG_LoadTexture_RW(
-                    _renderer,
-                    sdl::check(SDL_RWFromMem(
-                        (void*)image.data.data(), (int)image.data.size())),
-                    1)),
-                SDL_DestroyTexture
-            });
+        _textures.push_back(_renderer.loadTextureFromMemory(image.data));
     }
 }
 
@@ -83,30 +82,33 @@ bool View::processInput()
 
         if (event.type == SDL_MOUSEBUTTONDOWN &&
                 event.button.button == SDL_BUTTON_LEFT) {
-            if (!update()) {
-                return false;
+            bool processed = _widgets.press(event.button.x, event.button.y);
+            if (!processed) {
+                if (!update()) {
+                    return false;
+                }
             }
+        } else if (event.type == SDL_MOUSEBUTTONUP &&
+                event.button.button == SDL_BUTTON_LEFT) {
+            _widgets.release(event.button.x, event.button.y);
+        } else if (event.type == SDL_MOUSEMOTION) {
+            _widgets.motion(event.motion.x, event.motion.y);
         }
     }
 
-    return true;
+    return !_signalToExit;
 }
 
 void View::present()
 {
-    sdl::check(SDL_SetRenderDrawColor(_renderer, 50, 50, 50, 255));
-    sdl::check(SDL_RenderClear(_renderer));
+    _renderer.setDrawColor(50, 50, 50, 255);
+    _renderer.clear();
 
     if (_backgroundIndex != size_t(-1)) {
-        sdl::check(SDL_RenderCopy(
-            _renderer,
-            _textures.at(_backgroundIndex).get(),
-            nullptr,
-            nullptr));
+        _renderer.copy(_textures.at(_backgroundIndex), {}, {});
     }
 
-    _characterBox->render();
-    _speechBox->render();
+    _widgets.render(_renderer);
 
     _renderer.present();
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "booka.hpp"
+#include "repa.hpp"
 #include "sdl.hpp"
 #include "widget.hpp"
 
@@ -33,11 +34,15 @@ private:
     sdl::Window _window;
     sdl::Renderer _renderer;
 
-    std::vector<std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>> _textures;
+    std::vector<sdl::Texture> _textures;
 
+    repa::Repa _repa;
     ttf::Font _font;
     SpeechBox* _characterBox = nullptr;
     SpeechBox* _speechBox = nullptr;
     Widgets _widgets;
     std::unique_ptr<Mix_Music, void(*)(Mix_Music*)> _music {nullptr, Mix_FreeMusic};
+
+    // This is a (very) poor man's event queue from UI elements. Temporary.
+    bool _signalToExit = false;
 };

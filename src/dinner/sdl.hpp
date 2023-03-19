@@ -11,6 +11,7 @@
 #include <optional>
 #include <source_location>
 #include <span>
+#include <tuple>
 
 namespace sdl {
 
@@ -122,8 +123,28 @@ public:
     operator SDL_Renderer*() { return _ptr.get(); }
     operator const SDL_Renderer*() const { return _ptr.get(); }
 
-    void fillRect(const SDL_Rect& rect)
+    void setDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
+        sdl::check(SDL_SetRenderDrawColor(_ptr.get(), r, g, b, a));
+    }
+
+    void setDrawColor(const SDL_Color& color)
+    {
+        setDrawColor(color.r, color.g, color.b, color.a);
+    }
+
+    void clear()
+    {
+        sdl::check(SDL_RenderClear(_ptr.get()));
+    }
+
+    void fillRect(
+        const SDL_Rect& rect,
+        const std::optional<SDL_Color>& color = std::nullopt)
+    {
+        if (color) {
+            setDrawColor(*color);
+        }
         check(SDL_RenderFillRect(_ptr.get(), &rect));
     }
 
@@ -142,24 +163,38 @@ public:
         SDL_RenderPresent(_ptr.get());
     }
 
+    sdl::Texture loadTexture(const std::filesystem::path& path)
+    {
+        return sdl::Texture{
+            sdl::check(IMG_LoadTexture(_ptr.get(), path.string().c_str()))
+        };
+    }
+
+    sdl::Texture loadTextureFromMemory(const std::span<const std::byte>& data)
+    {
+        return sdl::Texture{
+            sdl::check(IMG_LoadTexture_RW(
+                _ptr.get(),
+                sdl::check(SDL_RWFromMem(
+                    (void*)data.data(),
+                    static_cast<int>(data.size()))),
+                1 /* freesrc */))
+        };
+    }
+
+    sdl::Texture createTextureFromSurface(sdl::Surface& surface)
+    {
+        return sdl::Texture{
+            sdl::check(SDL_CreateTextureFromSurface(_ptr.get(), surface))
+        };
+    }
+
 private:
     std::unique_ptr<SDL_Renderer, void(*)(SDL_Renderer*)> _ptr {
         nullptr, SDL_DestroyRenderer};
 };
 
 } // namespace sdl
-
-namespace img {
-
-inline sdl::Texture loadTexture(
-    sdl::Renderer& renderer, const std::filesystem::path& path)
-{
-    return sdl::Texture{
-        sdl::check(IMG_LoadTexture(renderer, path.string().c_str()))
-    };
-}
-
-} // namespace img
 
 namespace ttf {
 
@@ -216,5 +251,50 @@ public:
 private:
     std::unique_ptr<TTF_Font, void(*)(TTF_Font*)> _ptr {nullptr, TTF_CloseFont};
 };
+
+inline sdl::Surface renderUtf8Lcd(
+    Font& font,
+    const std::string& text,
+    const SDL_Color& fg,
+    const SDL_Color& bg,
+    uint32_t wrapLength)
+{
+    if (wrapLength > 0) {
+        return sdl::Surface{
+            ttf::check(TTF_RenderUTF8_LCD_Wrapped(
+                font, text.c_str(), fg, bg, wrapLength))
+        };
+    }
+
+    return sdl::Surface{
+        ttf::check(TTF_RenderUTF8_LCD(font, text.c_str(), fg, bg))
+    };
+}
+
+inline sdl::Surface renderUtf8Blended(
+    Font& font,
+    const std::string& text,
+    const SDL_Color& fg,
+    uint32_t wrapLength)
+{
+    if (wrapLength > 0) {
+        return sdl::Surface{
+            ttf::check(TTF_RenderUTF8_Blended_Wrapped(
+                font, text.c_str(), fg, wrapLength))
+        };
+    }
+
+    return sdl::Surface{
+        ttf::check(TTF_RenderUTF8_Blended(font, text.c_str(), fg))
+    };
+}
+
+inline std::tuple<int, int> sizeUtf8(Font& font, const std::string& text)
+{
+    int w = 0;
+    int h = 0;
+    ttf::check(TTF_SizeUTF8(font, text.c_str(), &w, &h));
+    return {w, h};
+}
 
 } // namespace ttf
